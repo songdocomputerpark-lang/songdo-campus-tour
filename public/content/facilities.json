@@ -1,0 +1,1117 @@
+{
+ "_안내": "시설별 소개 문구를 입력하세요. summary=한 줄 소개, description=본문, features=주요 장비·특징 목록, activities=교육활동 목록. 비워 두면 화면에 \"내용 준비 중\"으로 표시됩니다. 사진은 public/photos/<시설ID>/ 폴더에 넣고 npm run photos 를 실행하세요.",
+ "facilities": {
+  "main-1f-p1": {
+   "name": "홈베이스(숲터)",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p4": {
+   "name": "문서고",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p5": {
+   "name": "행정실",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p7": {
+   "name": "이사장실",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p8": {
+   "name": "접견실",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p9": {
+   "name": "교장실",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p10": {
+   "name": "당직실",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p11": {
+   "name": "본교무실",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p12": {
+   "name": "인쇄실",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p13": {
+   "name": "방송실",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p15": {
+   "name": "보건실",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p16": {
+   "name": "생활안전부",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p17": {
+   "name": "체육보건부",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-p18": {
+   "name": "교육과정지원부",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-1f-lobby": {
+   "name": "현관",
+   "location": "본관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-c1-1": {
+   "name": "1-1",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-c1-2": {
+   "name": "1-2",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-c1-3": {
+   "name": "1-3",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-c1-4": {
+   "name": "1-4",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-c1-5": {
+   "name": "1-5",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-p20": {
+   "name": "1학년 교무실",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-p21": {
+   "name": "학습실 Ⅰ",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-c1-6": {
+   "name": "1-6",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-c1-7": {
+   "name": "1-7",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-c1-8": {
+   "name": "1-8",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-c1-9": {
+   "name": "1-9",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-c1-10": {
+   "name": "1-10",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-2f-c1-11": {
+   "name": "1-11",
+   "location": "본관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-p22": {
+   "name": "학생회실",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-p23": {
+   "name": "AI 융합실",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-c1-12": {
+   "name": "1-12",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-c2-1": {
+   "name": "2-1",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-c2-2": {
+   "name": "2-2",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-p25": {
+   "name": "2학년 교무실",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-p26": {
+   "name": "학습실 Ⅱ",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-c2-3": {
+   "name": "2-3",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-c2-4": {
+   "name": "2-4",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-c2-5": {
+   "name": "2-5",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-c2-6": {
+   "name": "2-6",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-c2-7": {
+   "name": "2-7",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-3f-c2-8": {
+   "name": "2-8",
+   "location": "본관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-c3-1": {
+   "name": "3-1",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-p28": {
+   "name": "학습실 Ⅲ",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-c3-2": {
+   "name": "3-2",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-c3-3": {
+   "name": "3-3",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-c3-4": {
+   "name": "3-4",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-c3-5": {
+   "name": "3-5",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-c3-6": {
+   "name": "3-6",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-p29": {
+   "name": "3학년 교무실",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-c3-7": {
+   "name": "3-7",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-c3-8": {
+   "name": "3-8",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-c3-9": {
+   "name": "3-9",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-c3-10": {
+   "name": "3-10",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-c3-11": {
+   "name": "3-11",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "main-4f-p30": {
+   "name": "사회중점준비실",
+   "location": "본관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-1f-p31": {
+   "name": "진로진학상담부",
+   "location": "신관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-1f-p32": {
+   "name": "진로활동실",
+   "location": "신관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-1f-p33": {
+   "name": "샤워실·탈의실",
+   "location": "신관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-1f-p34": {
+   "name": "체력단련실",
+   "location": "신관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-2f-p35": {
+   "name": "세미나실",
+   "location": "신관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-2f-p37": {
+   "name": "미술실 Ⅱ",
+   "location": "신관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-2f-p38": {
+   "name": "P.B.L실 Ⅱ",
+   "location": "신관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-3f-c2-9": {
+   "name": "2-9",
+   "location": "신관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-3f-c2-10": {
+   "name": "2-10",
+   "location": "신관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-3f-c2-11": {
+   "name": "2-11",
+   "location": "신관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-3f-c2-12": {
+   "name": "2-12",
+   "location": "신관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-4f-c3-12": {
+   "name": "3-12",
+   "location": "신관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-4f-c3-13": {
+   "name": "3-13",
+   "location": "신관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "new-4f-p42": {
+   "name": "채움 면학실",
+   "location": "신관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-b1-p43": {
+   "name": "당구장",
+   "location": "과학관동 지하 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-b1-p44": {
+   "name": "창고",
+   "location": "과학관동 지하 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-1f-p45": {
+   "name": "물리학강의실",
+   "location": "과학관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-1f-p47": {
+   "name": "물리학실",
+   "location": "과학관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-1f-p46": {
+   "name": "준비실",
+   "location": "과학관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-2f-p48": {
+   "name": "지구과학실",
+   "location": "과학관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-2f-p51": {
+   "name": "생명과학실",
+   "location": "과학관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-2f-p49": {
+   "name": "준비실",
+   "location": "과학관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-2f-p50": {
+   "name": "스마트공작실",
+   "location": "과학관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-3f-p54": {
+   "name": "지능형 과학실",
+   "location": "과학관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-3f-p52": {
+   "name": "과학수리부",
+   "location": "과학관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-3f-p53": {
+   "name": "자료실",
+   "location": "과학관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-4f-p55": {
+   "name": "화학강의실",
+   "location": "과학관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-4f-p59": {
+   "name": "화학실",
+   "location": "과학관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-4f-p56": {
+   "name": "준비실",
+   "location": "과학관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "science-4f-p57": {
+   "name": "약품실",
+   "location": "과학관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-b1-p60": {
+   "name": "탁구장",
+   "location": "도서관동 지하 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-1f-p62": {
+   "name": "도서관",
+   "location": "도서관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-1f-p64": {
+   "name": "동아리실",
+   "location": "도서관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-2f-p68": {
+   "name": "아우름터",
+   "location": "도서관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-2f-p69": {
+   "name": "어우름실",
+   "location": "도서관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-2f-p70": {
+   "name": "인문사회부",
+   "location": "도서관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-2f-p71": {
+   "name": "창의인성부",
+   "location": "도서관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-3f-p72": {
+   "name": "리소스실",
+   "location": "도서관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-3f-p76": {
+   "name": "일본어 교실",
+   "location": "도서관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-3f-p73": {
+   "name": "컴퓨터실",
+   "location": "도서관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-3f-p77": {
+   "name": "스마트팜(greenery)",
+   "location": "도서관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-3f-p74": {
+   "name": "P.B.L실 Ⅰ",
+   "location": "도서관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-3f-p78": {
+   "name": "교육정보부",
+   "location": "도서관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "library-3f-p75": {
+   "name": "시설관리팀",
+   "location": "도서관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-1f-p79": {
+   "name": "유도부실",
+   "location": "체육관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-1f-p81": {
+   "name": "유도장",
+   "location": "체육관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-1f-p80": {
+   "name": "유도부 감독실",
+   "location": "체육관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-2f-p82": {
+   "name": "미술관리실",
+   "location": "체육관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-2f-p83": {
+   "name": "J-ROTC",
+   "location": "체육관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-2f-p86": {
+   "name": "음악실 Ⅱ",
+   "location": "체육관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-2f-p84": {
+   "name": "미술실 Ⅰ",
+   "location": "체육관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-2f-p87": {
+   "name": "음악실 Ⅰ",
+   "location": "체육관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-2f-p85": {
+   "name": "음악 준비실",
+   "location": "체육관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-3f-p90": {
+   "name": "중강당",
+   "location": "체육관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-3f-p88": {
+   "name": "Wee 클래스",
+   "location": "체육관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-3f-p89": {
+   "name": "교목실",
+   "location": "체육관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-4f-p91": {
+   "name": "체육관",
+   "location": "체육관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-4f-p94": {
+   "name": "창고",
+   "location": "체육관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-4f-p92": {
+   "name": "농구부 감독실",
+   "location": "체육관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "gym-4f-p93": {
+   "name": "무대",
+   "location": "체육관동 4층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-1f-parking": {
+   "name": "주차장",
+   "location": "급식관동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p107": {
+   "name": "여교사 휴게실",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p98": {
+   "name": "조리실",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p108": {
+   "name": "교직원 식당",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p99": {
+   "name": "영양사실",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p109": {
+   "name": "유도부실",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p100": {
+   "name": "전처리실",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p101": {
+   "name": "식품창고",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p110": {
+   "name": "샤워실",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p111": {
+   "name": "농구부실",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p104": {
+   "name": "소모품창고",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p106": {
+   "name": "조리사 휴게실(여)",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-2f-p105": {
+   "name": "샤워실(여)",
+   "location": "급식관동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-3f-p115": {
+   "name": "학생식당",
+   "location": "급식관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-3f-p112": {
+   "name": "세미콜론",
+   "location": "급식관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-3f-p113": {
+   "name": "세척실",
+   "location": "급식관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "dining-3f-p114": {
+   "name": "세제창고",
+   "location": "급식관동 3층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "restroom-1f-1": {
+   "name": "학생 화장실(남)",
+   "location": "화장실동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "restroom-1f-2": {
+   "name": "교직원 화장실(남)",
+   "location": "화장실동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "restroom-1f-3": {
+   "name": "교직원 화장실(여)",
+   "location": "화장실동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "restroom-1f-4": {
+   "name": "학생 화장실(남)",
+   "location": "화장실동 1층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "restroom-2f-1": {
+   "name": "교직원 화장실(남)",
+   "location": "화장실동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "restroom-2f-2": {
+   "name": "교직원 화장실(여)·샤워실(여)",
+   "location": "화장실동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  },
+  "restroom-2f-3": {
+   "name": "학생 화장실(남)",
+   "location": "화장실동 2층",
+   "summary": "",
+   "description": "",
+   "features": [],
+   "activities": []
+  }
+ }
+}

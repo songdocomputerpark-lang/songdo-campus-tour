@@ -1,0 +1,222 @@
+# 송도고를 걷다 — 인터랙티브 스마트 캠퍼스 투어
+
+송도고등학교(Since 1906)의 입학설명회용 **캠퍼스 탐방 웹앱**입니다. 학부모와 예비 신입생이 스마트폰·PC·대형 디스플레이에서 캠퍼스 배치도와 층별 평면도를 직접 둘러보고, 추천 투어와 시설 검색, 내 위치(GPS) 보기를 사용할 수 있습니다.
+
+- 서버·데이터베이스·외부 API·외부 지도 타일·추적 스크립트가 **없는 정적 웹앱**입니다. `dist/` 폴더만 올리면 동작합니다.
+- 글꼴(Pretendard, Cormorant Garamond)도 모두 번들에 포함되어 외부 CDN을 쓰지 않습니다.
+- 기술 구성: Vite · React 18 · TypeScript(strict) · Tailwind CSS 3.4 · zustand. 지도는 순수 SVG와 자체 pan/zoom 구현입니다.
+- 구현 명세 원본은 [`docs/SPEC.md`](docs/SPEC.md) 입니다.
+
+---
+
+## 1. 실행 방법
+
+필요한 것: **Node.js 20.19 이상 또는 22.12 이상**(개발·검증은 Node 24, npm 11)
+
+```bash
+npm install          # 처음 한 번 — 패키지 설치
+npm run dev          # 개발 서버 (기본 http://localhost:5173)
+npm run build        # 배포용 빌드 → dist/
+npm run preview      # 빌드 결과를 로컬에서 미리보기
+npm test             # 단위 테스트(vitest)
+npx tsc --noEmit     # 타입 검사만
+```
+
+- `npm run dev` 와 `npm run build` 는 실행 전에 `npm run photos` 를 자동으로 실행해 `public/content/photos.json` 을 갱신합니다.
+- 개발 서버를 휴대폰으로 확인하려면 `npm run dev -- --host` 로 실행하고 같은 Wi-Fi 의 `http://<PC의 IP>:5173` 으로 접속합니다. (단, 이 주소는 HTTPS 가 아니므로 **GPS 는 동작하지 않습니다** — 아래 6장 참고)
+
+### 배포 (dist)
+
+1. `npm run build` 를 실행합니다.
+2. 생성된 **`dist/` 폴더의 내용 전체**를 정적 웹 호스팅(학교 웹서버, GitHub Pages, Netlify, Cloudflare Pages, S3 등)에 올립니다.
+3. 주소 방식은 `#/…`(hash) 이므로 별도의 서버 설정(SPA 리다이렉트)이 필요 없고, `base: './'` 설정으로 **어느 하위 경로(예: `https://school.kr/tour/`)에 올려도** 동작합니다.
+4. **반드시 HTTPS 로 제공하세요.** 휴대폰 브라우저는 HTTPS(또는 localhost)에서만 GPS 를 허용합니다.
+5. 입학설명회 안내문 QR 코드에는 아래 주소를 쓰면 편리합니다.
+
+| 주소 | 열리는 화면 |
+| --- | --- |
+| `https://…/` | 인트로 → 캠퍼스 전체 지도 |
+| `https://…/#/tour/1` | 추천 투어 1번째 지점부터 (인트로 생략) |
+| `https://…/#/b/main` | 본관동 건물 안내 |
+| `https://…/#/b/main/2F` | 본관동 2층 평면도 |
+| `https://…/#/b/main/2F/main-2f-c1-1` | 특정 시설(방) 상세 |
+| `https://…/#/calibrate` | 위치 보정(관리자용) |
+
+건물 ID: `main`(본관동) · `new`(신관동) · `science`(과학관동) · `library`(도서관동) · `gym`(체육관동) · `dining`(급식관동) · `restroom`(화장실동)
+
+### 유용한 조작
+
+| 조작 | 동작 |
+| --- | --- |
+| `/` 또는 `Ctrl/⌘ + K` | 검색 열기 (한글 초성 검색 지원: `ㄷㅅㄱ` → 도서관) |
+| `Esc` | 한 단계 뒤로 (선택 해제 → 건물 → 전체 지도 / 투어 중에는 투어 종료) |
+| `+` `-` `0`, 방향키 | 지도 확대·축소·맞춤·이동 (지도에 포커스가 있을 때) |
+| `←` `→` | 투어 이전·다음 지점, 사진 넘기기 |
+
+---
+
+## 2. 콘텐츠 편집 (코드 수정 없이)
+
+학교가 직접 고치는 내용은 모두 **`public/content/`** 폴더의 JSON 파일입니다. 파일을 고친 뒤 다시 `npm run build` 하여 `dist/` 를 올리면 반영됩니다. (개발 서버 실행 중에는 새로고침만 하면 됩니다.)
+
+> JSON 은 따옴표·쉼표에 민감합니다. 편집 후 [jsonlint.com](https://jsonlint.com) 같은 검사기나 VS Code 에서 오류가 없는지 확인하세요. 파일을 읽지 못하면 앱은 해당 내용을 "준비 중"으로 표시하고 계속 동작합니다.
+
+### 2-1. 시설 소개 — `public/content/facilities.json`
+
+시설(방) ID 를 키로, 시설마다 아래 필드를 가집니다. **현재 모든 시설의 소개 내용은 비어 있으며**, 비어 있는 항목은 앱에서 "학교에서 소개 내용을 준비하고 있습니다."로 표시됩니다. 내용을 채운 항목만 화면에 나타납니다.
+
+```json
+{
+  "facilities": {
+    "main-2f-c1-1": {
+      "name": "1-1",
+      "location": "본관동 2층",
+      "summary": "한두 문장의 짧은 소개 (목록·투어 카드에 표시)",
+      "description": "자세한 설명 (상세 패널에 표시)",
+      "features": ["주요 장비·특징 1", "주요 장비·특징 2"],
+      "activities": ["교육활동 1", "교육활동 2"]
+    }
+  }
+}
+```
+
+- `name`, `location` 은 도면 데이터(`src/data/floors.json`)와 일치해야 합니다. **바꾸지 마세요.** (테스트가 검사합니다)
+- `summary`(요약), `description`(설명), `features`(주요 장비·특징 목록), `activities`(교육활동 목록)를 채웁니다.
+- 시설 ID 목록은 [`public/photos/README.md`](public/photos/README.md) 의 표에서 찾을 수 있습니다.
+- **없는 시설·활동·수치를 만들어 넣지 마세요.** 확인된 사실만 적습니다.
+
+### 2-2. 추천 투어 — `public/content/tour.json`
+
+```json
+{
+  "title": "추천 캠퍼스 투어",
+  "stops": [
+    { "facility": "main-1f-lobby", "note": "본관동 1층 중앙 현관입니다." },
+    { "facility": "main-2f-c1-1", "note": "이 지점에서 보여 줄 짧은 안내 문구" }
+  ]
+}
+```
+
+- `stops` 의 **배열 순서가 곧 관람 순서**입니다. 지점을 추가·삭제·순서 변경할 수 있습니다.
+- `facility` 는 실제 시설 ID 여야 하고, `note` 는 그 지점의 짧은 안내입니다.
+- 투어는 "순서"만 안내하며 **이동 경로·거리·소요 시간은 표시하지 않습니다**(정확한 실측 자료가 없기 때문입니다).
+
+### 2-3. 도면에 대한 표시 규칙
+
+- 명칭 대응이 불확실한 시설(`conf: "medium"`)은 상세 패널의 "도면 정보"에 **"명칭 대응 검토 중"** 배지와 메모가 표시됩니다.
+- 개략도(`schematic: true`) 층에는 **"개략도"** 배지가 표시됩니다.
+- 이 정보는 `src/data/` 의 데이터에서 오며, 임의로 수정하지 않습니다.
+
+---
+
+## 3. 사진 추가 방법
+
+사진은 `public/photos/` 아래에 **시설 ID 이름의 폴더**를 만들어 넣습니다. 사진이 없는 시설은 건물 색 그라디언트와 위치 미니맵이 있는 "사진 준비 중" 화면이 표시됩니다.
+
+```
+public/photos/
+  main-2f-c1-1/          ← 시설 ID (정확히 같은 이름)
+    01.jpg
+    02.jpg
+    captions.json        ← 선택: 사진 설명
+  building-main/         ← 건물 전경 사진은 building-<건물ID>
+    01.jpg
+```
+
+1. 폴더 이름은 시설 ID 와 **정확히** 같아야 합니다. (ID 표: `public/photos/README.md`)
+2. 지원 형식: `jpg` `jpeg` `png` `webp` `avif`. 파일 이름 순서(숫자 순)대로 표시됩니다.
+3. 권장 크기: 가로 1600px 이하, 파일당 300KB 안팎 (스마트폰에서 빠르게 열리도록).
+4. 사진 설명(선택): 같은 폴더의 `captions.json` 에 `{ "01.jpg": "도서관 열람실 전경" }` 형식으로 적습니다.
+5. 터미널에서 **`npm run photos`** 를 실행합니다. `public/content/photos.json` 이 다시 만들어집니다. (`npm run dev`·`npm run build` 는 자동 실행)
+   - 알 수 없는 폴더 이름이 있으면 경고가 출력됩니다. 시설 ID 철자를 확인하세요.
+6. 학생 얼굴이 식별되는 사진은 학교 개인정보 보호 지침과 초상권 동의를 확인한 뒤에만 사용하세요.
+
+사진은 시설 상세 패널·건물 안내·추천 투어에 갤러리(스와이프, 화살표, 점 표시)로 나타나고, 탭하면 확대 보기(키보드 `←` `→` `Esc`, 핀치 확대)가 열립니다.
+
+---
+
+## 4. GPS 내 위치와 개인정보
+
+- "내 위치" 버튼은 처음 누를 때 **안내 시트**를 보여 주고, 동의한 뒤에만 위치를 요청합니다.
+- 위치 좌표는 **기기 안에서만** 사용합니다. 서버로 전송하거나 저장하지 않습니다. (동의 여부만 이번 세션 동안 기억합니다.)
+- 정확도가 50 m 보다 나쁘면 마커 대신 안내를, 캠퍼스에서 300 m 이상 떨어져 있으면 "학교 밖에 계십니다"를 표시합니다.
+- 건물 **안의 층은 자동으로 인식하지 않습니다**(GPS 의 한계). 층은 직접 선택하며, 층 평면도 화면에서는 "가장 가까운 건물"만 안내합니다.
+- 권한 거부·미지원·시간 초과·HTTP 접속 시에는 안내 메시지가 뜨고 자유 탐색은 그대로 쓸 수 있습니다.
+- 향후 실내 측위(BLE 등)를 붙일 수 있도록 `src/features/gps/positioning.ts` 에 `PositionProvider` 인터페이스가 있습니다.
+
+---
+
+## 5. GPS 보정 절차 (`#/calibrate`, 관리자용)
+
+기본 위치 변환은 2021 건물배치도(1:800)를 OpenStreetMap 건물 윤곽과 맞춘 **추정값(건물 중심 오차 RMS 약 4 m, 최대 약 8 m)** 입니다. 현장에서 기준점을 측정하면 더 정확해집니다. About(정보) 창의 "현재 위치 기준" 에서 현재 적용 상태를 볼 수 있습니다.
+
+준비: **HTTPS 로 배포된 주소** 또는 보정을 마친 PC 의 localhost 를, GPS 가 있는 스마트폰에서 **실외**에서 엽니다. 주소 뒤에 `#/calibrate` 를 붙이거나, 정보 창의 보정 링크를 누릅니다.
+
+1. 지도를 충분히 확대하고, **지금 서 있는 지점**(문 앞 계단·건물 모서리 등 눈에 띄는 곳)을 지도에서 정확히 탭합니다.
+2. **"현재 위치 기록 (10초)"** 를 누르고, 가만히 서서 10초 기다립니다. (평균 위치와 정확도가 기록됩니다.)
+3. 서로 **멀리 떨어진 지점** 2~4곳(예: 정문, 운동장 반대편, 건물 양 끝)에서 1~2를 반복합니다.
+   - 1점: 위치만 평행이동으로 보정합니다.
+   - 2점 이상: 위치·회전·배율을 함께 맞춥니다(최소제곱). 각 점의 **잔차(m)** 가 표시되므로, 잔차가 큰 점은 지우고 다시 측정합니다.
+4. **"이 기기에 적용"** 을 누르면 그 휴대폰 브라우저에만 저장되어(localStorage) 바로 "내 위치"에 반영됩니다. 현장에서 확인해 보세요.
+5. 모든 사용자에게 적용하려면 **"JSON 복사"**(또는 "다운로드")로 내보낸 내용을 `public/content/geo-calibration.json` 의 `calibration` 값에 붙여넣고, 다시 빌드·배포합니다. 파일 전체를 붙여넣어도, `calibration` 값만 붙여넣어도 됩니다.
+6. 되돌리려면 **"초기화"** 를 누르거나 `calibration` 을 `null` 로 되돌립니다.
+
+적용 우선순위: **이 기기에 저장한 보정 > `geo-calibration.json` > `campus.json` 기본(OSM 추정)**
+
+---
+
+## 6. 데이터 출처와 한계
+
+| 자료 | 용도 |
+| --- | --- |
+| `학교배치도_2025.pdf` (2025 교내 시설배치도) | 시설 명칭·층 구성 기준 |
+| `★학교배치도 및 층별평면도(2023).pptx` | 건물 배치도(1:800)와 층별 평면도 좌표 기준 |
+| OpenStreetMap 건물 윤곽 (© OpenStreetMap contributors, ODbL) | GPS 위치 변환의 기준점 |
+
+한계와 주의 (앱의 정보 창에도 같은 내용이 표시됩니다):
+
+- **2025 시설배치도의 명칭 + 2023 층별평면도의 좌표**를 합친 것이라 **실제와 일부 다를 수 있습니다.** 명칭 대응이 불확실한 시설은 "명칭 대응 검토 중"으로 표시합니다.
+- 일부 층은 CAD 도면이 없어 **개략도**입니다(평면도 위에 "개략도" 배지 표시). 정확한 치수는 아닙니다.
+- 시설 소개·교육활동·사진은 **학교가 채워 넣기 전까지 비어 있습니다.** 앱은 비어 있는 곳에 가짜 내용을 넣지 않습니다.
+- 실외 위치 변환은 추정 좌표(RMS 약 4 m)이며, 현장 보정(5장)으로 개선할 수 있습니다. 건물 안의 층·방 위치는 GPS 로 알 수 없습니다.
+- CCTV·보안 관련 정보는 포함하지 않았습니다.
+- 지도 배경 타일은 쓰지 않고 배치도 데이터로 직접 그립니다. OpenStreetMap 은 좌표 대조에만 사용했으며 정보 창에 ODbL 표기를 넣었습니다.
+
+---
+
+## 7. 폴더 구조
+
+```
+campus-tour/
+  index.html, vite.config.ts, tailwind.config.js, tsconfig.json
+  docs/SPEC.md                 구현 명세(단일 기준 문서)
+  scripts/sync-photos.mjs      public/photos → public/content/photos.json 생성 (npm run photos)
+  public/
+    content/                   ★ 편집 가능한 콘텐츠
+      facilities.json            시설 소개
+      tour.json                  추천 투어 순서
+      photos.json                사진 목록 (npm run photos 가 자동 생성)
+      geo-calibration.json       GPS 보정 결과
+    photos/                    ★ 사진 (시설ID/ , building-건물ID/)
+    plans/                     층별 CAD 도면 레이어 (webp)
+    brand/emblem.svg           학교 엠블럼
+  src/
+    data/                      읽기 전용 도면 데이터: campus.json(배치도·건물·좌표 변환), floors.json(26개 층·139개 시설), types.ts, index.ts(조회 헬퍼)
+    store/                     useAppStore.ts(전체 상태·내비게이션), hash.ts(주소 hash 파싱·생성)
+    lib/                       geometry · geo(좌표 변환·보정 적합) · hangul(초성) · content(콘텐츠 로더) · calibration · color · env
+    map/                       SVG 지도: usePanZoom, MapViewport, CampusMap, FloorPlan, FloorSelector, Compass, ScaleBar, Legend, icons …
+    ui/                        Shell(반응형 레이아웃), BottomSheet, SidePanel, Toolbar, Breadcrumb, Intro, Toast, FloorList …
+    features/
+      detail/                  시설·건물 상세, 갤러리, 라이트박스, 사진 플레이스홀더
+      search/                  검색 UI와 검색 색인(초성·공백 무시)
+      tour/                    추천 투어 UI와 진행 로직
+      gps/                     내 위치(positioning, useGeolocation, GpsLayer, GpsControls, ConsentSheet), 보정(Calibrate)
+      about/                   정보(About) 창
+  tests/                       vitest: 좌표 변환·보정 적합·초성·hash·스토어·데이터 무결성
+```
+
+### 개발 메모
+
+- 데이터 무결성 테스트(`tests/data.test.ts`)는 26개 층 · 139개 시설 · id 유일성, 모든 방 좌표가 층 크기 안에 있는지, `facilities.json`·`tour.json` 의 모든 키가 `floors.json` 에 존재하는지를 검사합니다. 데이터 파일(`src/data/*.json`)을 고치면 `npm test` 로 확인하세요.
+- 라이트박스와 보정 화면은 `React.lazy` 로 분리되어 처음 화면의 JS 는 약 119 KB(gzip) 입니다.
+- 모션은 CSS/rAF 만 사용하며 `prefers-reduced-motion` 을 존중합니다. 사진 자동 넘김은 그 설정에서 꺼지고, 투어 자동 진행은 기본이 꺼짐이며 사용자가 직접 켜야 합니다.
