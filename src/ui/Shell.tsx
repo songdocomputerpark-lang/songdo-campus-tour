@@ -7,6 +7,7 @@ import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRe
 import { AboutModal } from '../features/about/AboutModal'
 import { BuildingDetail } from '../features/detail/BuildingDetail'
 import { DetailPanel } from '../features/detail/DetailPanel'
+import { EventPanel } from '../features/event/EventPanel'
 import { GpsControls } from '../features/gps/GpsControls'
 import { SearchBox } from '../features/search/SearchBox'
 import { TourBar } from '../features/tour/TourBar'
@@ -44,7 +45,7 @@ export function Shell() {
   return <MapShell />
 }
 
-type PanelKind = 'tour' | 'room' | 'building' | 'floor'
+type PanelKind = 'tour' | 'event' | 'room' | 'building' | 'floor'
 
 /** 투어 콤팩트 시트: 머리글 높이를 아직 못 쟀을 때의 기본값(px). 실제 값은 TourBar 가 알려 준다 */
 const TOUR_HEADER_FALLBACK = 122
@@ -96,6 +97,7 @@ function MapShell() {
   const floorId = useAppStore((s) => s.floorId)
   const roomId = useAppStore((s) => s.roomId)
   const tourActive = useAppStore((s) => s.tour.active)
+  const eventActive = useAppStore((s) => s.event.active)
   const panelOpen = useAppStore((s) => s.panel.open)
   const snap = useAppStore((s) => s.panel.snap)
   const setPanelSnap = useAppStore((s) => s.setPanelSnap)
@@ -104,7 +106,8 @@ function MapShell() {
   const openSearch = useAppStore((s) => s.openSearch)
   const northDeg = useNorthDeg()
 
-  const kind: PanelKind | null = tourActive ? 'tour' : roomId ? 'room' : view === 'campus' && buildingId ? 'building' : view === 'floor' ? 'floor' : null
+  const eventMap = eventActive && view === 'campus' && !tourActive
+  const kind: PanelKind | null = tourActive ? 'tour' : eventMap ? 'event' : roomId ? 'room' : view === 'campus' && buildingId ? 'building' : view === 'floor' ? 'floor' : null
   const visible = panelOpen && kind !== null
   const lastKind = useRef<PanelKind>('building')
   if (kind) lastKind.current = kind
@@ -129,7 +132,9 @@ function MapShell() {
       }
       if (e.key === 'Escape' && !modalOpen && !e.defaultPrevented && !typing) {
         if (st.tour.active) st.endTour() // 투어 중 Esc = 투어 종료(자유 탐색). 선택된 시설은 유지
-        else if (st.roomId) st.clearRoom()
+        else if (st.event.active && st.view === 'campus') {
+          if (st.event.spotNo !== null) st.openEvent(null) // 안내 장소 → 전체 안내
+        } else if (st.roomId) st.clearRoom()
         else if (st.view === 'floor') st.exitFloor()
         else if (st.buildingId) st.goCampus()
       }
@@ -181,14 +186,32 @@ function MapShell() {
   // ── 접근성: 현재 위치 안내 + 문서 제목 ──
   const building = getBuilding(buildingId)
   const floor = view === 'floor' ? getFloor(buildingId, floorId) : undefined
-  const where = floor && building ? `${building.name} ${floorLabel(floor.floor)} 평면도` : building ? `${building.name} 건물 안내` : '캠퍼스 전체 지도'
+  const where =
+    floor && building
+      ? `${building.name} ${floorLabel(floor.floor)} 평면도`
+      : building
+        ? `${building.name} 건물 안내`
+        : eventMap
+          ? '입학설명회 안내'
+          : '캠퍼스 전체 지도'
   useEffect(() => {
     document.title = `${where} · 송도고등학교 캠퍼스 투어`
   }, [where])
 
   const content =
-    shownKind === 'tour' ? <TourBar layout={isDesktop ? 'panel' : 'sheet'} onPeekHeight={isDesktop ? undefined : onTourPeek} /> : shownKind === 'room' ? <DetailPanel /> : shownKind === 'building' ? <BuildingDetail /> : <FloorList />
-  const panelLabel = shownKind === 'tour' ? '추천 투어' : shownKind === 'room' ? '시설 상세 안내' : shownKind === 'building' ? '건물 안내' : '층 시설 목록'
+    shownKind === 'tour' ? (
+      <TourBar layout={isDesktop ? 'panel' : 'sheet'} onPeekHeight={isDesktop ? undefined : onTourPeek} />
+    ) : shownKind === 'event' ? (
+      <EventPanel />
+    ) : shownKind === 'room' ? (
+      <DetailPanel />
+    ) : shownKind === 'building' ? (
+      <BuildingDetail />
+    ) : (
+      <FloorList />
+    )
+  const panelLabel =
+    shownKind === 'tour' ? '추천 투어' : shownKind === 'event' ? '입학설명회 안내' : shownKind === 'room' ? '시설 상세 안내' : shownKind === 'building' ? '건물 안내' : '층 시설 목록'
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-paper">

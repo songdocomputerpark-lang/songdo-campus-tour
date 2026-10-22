@@ -17,6 +17,8 @@ import { memo, useCallback, useEffect, useMemo, useState, type KeyboardEvent, ty
 import { buildings, campus, site } from '../data'
 import type { Building, Bounds, Insets, MinorBuilding, Pt } from '../data/types'
 import { GpsLayer } from '../features/gps/GpsLayer'
+import { spotByNo } from '../features/event/eventModel'
+import { getSpots, useSpots } from '../features/tour/spots'
 import { shade, tint } from '../lib/color'
 import {
   boundsFromViewBox,
@@ -31,9 +33,13 @@ import {
 } from '../lib/geometry'
 import { useAppStore } from '../store/useAppStore'
 import { buildingHeight, type PlacedLabel } from './buildingLabels'
+import { eventModelFor, focusBoundsFor } from './eventLayout'
+import { EventLayer } from './EventLayer'
 import { useMapScale } from './MapContext'
 import { registerMap } from './mapBus'
 import { MapViewport } from './MapViewport'
+import { SpotPinLayer } from './SpotPinLayer'
+import { uiScale } from '../lib/env'
 import { useLabelPlacement } from './useLabelPlacement'
 import type { PanZoomApi } from './usePanZoom'
 
@@ -129,6 +135,9 @@ const PORTRAIT_FIT: Bounds = (() => {
   return expandBounds(u, u.w * 0.06, u.h * 0.06)
 })()
 
+/** 안내 장소를 선택했을 때 최대 배율 — 건물이 화면을 가득 채우지 않고 주변(운동장·옆 건물)이 함께 보이게 */
+const EVENT_FOCUS_MAX_K = 1.15
+
 /** 건물로 줌할 때 맞출 영역(지붕 포함) */
 function focusBounds(id: string): Bounds | null {
   const g = GEO_BY_ID.get(id as Building['id'])
@@ -150,11 +159,12 @@ function ScreenAt({ x, y, children, className }: { x: number; y: number; childre
 }
 
 /** 이름표: 알약(코드 배지 + 한글 이름 [+ 영문 부제]). 위치·크기·표시 여부는 buildingLabels.placeLabels 가 정한다 */
-function BuildingLabel({ b, item, selected }: { b: Building; item: PlacedLabel; selected: boolean }) {
+function BuildingLabel({ b, item, selected, hidden }: { b: Building; item: PlacedLabel; selected: boolean; hidden: boolean }) {
   const { w, h: hgt, compact } = item.metrics
+  const shown = item.visible && !hidden
   return (
     <ScreenAt x={item.at[0]} y={item.at[1]}>
-      <g className="bld-label" style={{ opacity: item.visible ? 1 : 0 }} aria-hidden={item.visible ? undefined : true}>
+      <g className="bld-label" style={{ opacity: shown ? 1 : 0 }} aria-hidden={shown ? undefined : true}>
         <g transform={`translate(${item.dx} ${item.dy})`}>
           <rect
             x={-w / 2}
@@ -201,12 +211,12 @@ function BuildingLabel({ b, item, selected }: { b: Building; item: PlacedLabel; 
 }
 
 /** 건물 이름표 묶음 — 배율 5% 단위로 충돌 회피 배치를 다시 계산한다 (buildingLabels.ts) */
-function BuildingLabels({ buildingId }: { buildingId: string | null }) {
+function BuildingLabels({ buildingId, hiddenIds }: { buildingId: string | null; hiddenIds?: ReadonlySet<string> }) {
   const placement = useLabelPlacement()
   return (
     <>
       {GEO.map((g) => (
-        <BuildingLabel key={g.b.id} b={g.b} item={placement.items[g.b.id]} selected={buildingId === g.b.id} />
+        <BuildingLabel key={g.b.id} b={g.b} item={placement.items[g.b.id]} selected={buildingId === g.b.id} hidden={!!hiddenIds?.has(g.b.id)} />
       ))}
     </>
   )
@@ -236,15 +246,19 @@ const BuildingShape = memo(function BuildingShape({
   dim,
   interactive,
   onSelect,
+  ev,
 }: {
   g: BuildingGeo
   selected: boolean
   dim: boolean
   interactive: boolean
   onSelect: (id: Building['id']) => void
+  /** 입학설명회 안내 모드: 'spot' = 안내 장소가 있는 건물(금빛 테두리) · 'muted' = 없는 건물(흐리게) */
+  ev?: 'spot' | 'muted'
 }) {
   const { b } = g
   const gradId = `roof-${b.id}`
+  const hullPoints = polygonPoints(g.hull)
   const onKey = (e: KeyboardEvent<SVGGElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -257,9 +271,16 @@ const BuildingShape = memo(function BuildingShape({
       data-hit={interactive ? '' : undefined}
       data-selected={selected}
       data-dim={dim}
+      data-ev={ev}
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : -1}
-      aria-label={interactive ? `${b.name} (${b.en}), ${b.floors.length}개 층. 선택하면 건물 안내와 층 목록을 봅니다` : undefined}
+      aria-label={
+        interactive
+          ? ev === 'spot'
+            ? `${b.name}, 학생 안내 장소가 있는 건물. 선택하면 안내를 봅니다`
+            : `${b.name} (${b.en}), ${b.floors.length}개 층. 선택하면 건물 안내와 층 목록을 봅니다`
+          : undefined
+      }
       aria-pressed={interactive ? selected : undefined}
       onClick={interactive ? () => onSelect(b.id) : undefined}
       onKeyDown={interactive ? onKey : undefined}
@@ -270,6 +291,13 @@ const BuildingShape = memo(function BuildingShape({
           <stop offset="1" stopColor={b.color} />
         </linearGradient>
       </defs>
+      {ev === 'spot' && (
+        <g className="ev-ring-set" data-sel={selected} pointerEvents="none">
+          <polygon className="ev-ring ev-ring-o" points={hullPoints} />
+          <polygon className="ev-ring ev-ring-m" points={hullPoints} />
+          <polygon className="ev-ring ev-ring-i" points={hullPoints} />
+        </g>
+      )}
       <g className="bld-shadow" style={{ fill: '#0b1220' }}>
         {g.shadows.map((s, i) => (
           <polygon key={i} points={s.points} fillOpacity={s.opacity} />
@@ -288,9 +316,9 @@ const BuildingShape = memo(function BuildingShape({
   )
 })
 
-function MinorShape({ g, showLabel }: { g: MinorGeo; showLabel: boolean }) {
+function MinorShape({ g, showLabel, muted }: { g: MinorGeo; showLabel: boolean; muted: boolean }) {
   return (
-    <g pointerEvents="none">
+    <g pointerEvents="none" className="minor-shape" data-muted={muted}>
       <polygon points={polygonPoints(g.m.poly.map(([x, y]) => [x + 2.5, y + 2] as Pt))} fill="#0b1220" fillOpacity={0.06} />
       <polygon points={g.sides} fill="#b9b3a3" stroke="#b9b3a3" strokeWidth={0.6} />
       <polygon points={polygonPoints(g.roof)} fill="#d9d4c6" style={{ stroke: '#a9a393', strokeWidth: 1, vectorEffect: 'non-scaling-stroke' }} />
@@ -336,6 +364,12 @@ export function CampusMap({ active = true, insets, mode = 'explore', onSiteTap, 
   const buildingId = useAppStore((s) => s.buildingId)
   const view = useAppStore((s) => s.view)
   const selectBuilding = useAppStore((s) => s.selectBuilding)
+  const eventActive = useAppStore((s) => s.event.active) && mode === 'explore'
+  const evSpotNo = useAppStore((s) => s.event.spotNo)
+  const spots = useSpots()
+  const evModel = useMemo(() => eventModelFor(spots), [spots])
+  const evBuilding = eventActive ? (spotByNo(spots, evSpotNo)?.buildingId ?? null) : null
+  const evBuildings = useMemo(() => new Set<string>(evModel.buildings.map((b) => b.id)), [evModel])
   const [api, setApi] = useState<PanZoomApi | null>(null)
 
   const onApi = useCallback((a: PanZoomApi | null) => {
@@ -344,19 +378,59 @@ export function CampusMap({ active = true, insets, mode = 'explore', onSiteTap, 
   }, [])
 
   // 선택 건물로 줌 / 선택 해제 시 전체 맞춤. (층 평면도 화면에서는 현재 카메라 유지 → 크로스페이드)
+  //  안내 모드: 선택한 안내 장소의 '건물 + 말풍선 카드'가 한 화면에 들어오도록(카드는 화면 고정 크기라 배율을 반복 계산), 선택이 없으면 전체 맞춤.
+  //  insets(패널·시트 높이)가 바뀌어도 다시 맞춘다.
+  const insetsKey = `${insets.top}|${insets.right}|${insets.bottom}|${insets.left}`
   useEffect(() => {
     if (!api || view !== 'campus' || mode !== 'explore') return
+    if (eventActive) {
+      const eb = evBuilding ? evModel.byId.get(evBuilding as Building['id']) : undefined
+      if (!eb) {
+        // 전체 안내: 건물 외접 영역 + 카드가 놓일 여백(데스크톱도 폰과 같은 영역 — 대지 전체보다 한 단계 크게 보인다)
+        api.animateTo(PORTRAIT_FIT, { padding: 10, maxScale: 1.2 })
+        return
+      }
+      // 뷰포트 크기가 측정된 뒤에 실행 (딥링크 진입 대응, 최대 ~0.5초)
+      const pad = 12
+      let raf = 0
+      let tries = 0
+      const run = () => {
+        const a = api.availableRect()
+        if (a.w > 0 && a.h > 0) api.animateTo(focusBoundsFor(eb, { w: a.w - pad * 2, h: a.h - pad * 2 }, uiScale(), EVENT_FOCUS_MAX_K), { padding: pad, maxScale: EVENT_FOCUS_MAX_K + 0.05 })
+        else if (tries++ < 30) raf = requestAnimationFrame(run)
+        else api.fit()
+      }
+      run()
+      return () => cancelAnimationFrame(raf)
+    }
     const fb = buildingId ? focusBounds(buildingId) : null
     if (fb) api.animateTo(fb, { padding: { top: 44, bottom: 36, left: 28, right: 28 }, maxScale: 3.2 })
     else api.fit()
-  }, [api, buildingId, view, mode])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, buildingId, view, mode, eventActive, evBuilding, evModel, eventActive ? insetsKey : ''])
 
-  const select = useCallback((id: Building['id']) => selectBuilding(id), [selectBuilding])
+  const select = useCallback(
+    (id: Building['id']) => {
+      const st = useAppStore.getState()
+      if (st.event.active) {
+        // 안내 모드: 건물을 누르면 그 건물의 안내 장소를 연다 (이미 그 건물의 장소를 보고 있으면 그대로)
+        const list = getSpots().byBuilding.get(id) ?? []
+        const cur = spotByNo(getSpots(), st.event.spotNo)
+        if (list.length && cur?.buildingId !== id) st.openEvent(list[0].no ?? 0)
+        return
+      }
+      selectBuilding(id)
+    },
+    [selectBuilding],
+  )
 
   const onBackgroundTap = useCallback(
     (world: Pt) => {
+      const st = useAppStore.getState()
       if (mode === 'pick') onSiteTap?.(world)
-      else if (useAppStore.getState().buildingId) useAppStore.getState().goCampus()
+      else if (st.event.active) {
+        if (st.event.spotNo !== null && st.view === 'campus') st.openEvent(null) // 빈 곳 탭 = 선택 해제 → 전체 안내
+      } else if (st.buildingId) st.goCampus()
     },
     [mode, onSiteTap],
   )
@@ -384,6 +458,8 @@ export function CampusMap({ active = true, insets, mode = 'explore', onSiteTap, 
           onSelect={select}
           showGps={showGps}
           extraLayers={extraLayers}
+          eventBuildings={eventActive ? evBuildings : undefined}
+          eventSelected={evBuilding}
         />
       </MapViewport>
     </div>
@@ -397,14 +473,20 @@ function CampusContent({
   onSelect,
   showGps,
   extraLayers,
+  eventBuildings,
+  eventSelected,
 }: {
   buildingId: string | null
   interactive: boolean
   onSelect: (id: Building['id']) => void
   showGps: boolean
   extraLayers?: ReactNode
+  /** 입학설명회 안내 모드면 안내 장소가 있는 건물 id 집합 (그 밖의 건물·부속 건물은 흐리게) */
+  eventBuildings?: ReadonlySet<string>
+  eventSelected?: string | null
 }) {
   const k = useMapScale(3)
+  const eventMode = !!eventBuildings
   return (
     <>
       <SiteBase />
@@ -425,27 +507,32 @@ function CampusContent({
       ))}
 
       {MINOR.map((g) => (
-        <MinorShape key={g.m.id} g={g} showLabel={k >= 0.62} />
+        <MinorShape key={g.m.id} g={g} showLabel={k >= 0.62} muted={eventMode} />
       ))}
 
-      {GEO.map((g) => (
-        <BuildingShape
-          key={g.b.id}
-          g={g}
-          selected={buildingId === g.b.id}
-          dim={!!buildingId && buildingId !== g.b.id}
-          interactive={interactive}
-          onSelect={onSelect}
-        />
-      ))}
+      {GEO.map((g) => {
+        const spotBuilding = !!eventBuildings?.has(g.b.id)
+        return (
+          <BuildingShape
+            key={g.b.id}
+            g={g}
+            selected={buildingId === g.b.id || eventSelected === g.b.id}
+            dim={!!buildingId && buildingId !== g.b.id}
+            interactive={interactive && (!eventMode || spotBuilding)}
+            onSelect={onSelect}
+            ev={eventMode ? (spotBuilding ? 'spot' : 'muted') : undefined}
+          />
+        )
+      })}
 
-      {/* 건물 라벨은 모든 건물 위에 */}
-      <BuildingLabels buildingId={buildingId} />
+      {/* 건물 라벨은 모든 건물 위에 (안내 모드에서는 카드가 이름을 보여 주므로 안내 장소 건물의 이름표는 숨김) */}
+      <BuildingLabels buildingId={buildingId} hiddenIds={eventBuildings} />
 
       {site.gates.map((gt) => (
         <GateMarker key={gt.name} name={gt.name} at={gt.at} showText={k >= 0.24} />
       ))}
       {k >= 0.9 &&
+        !eventMode &&
         site.entrances.map((en) => (
           <ScreenAt key={en.name} x={en.at[0]} y={en.at[1]}>
             <circle r={4.2} style={{ fill: 'rgb(var(--gold))', stroke: 'rgb(var(--surface))', strokeWidth: 1.6 }} />
@@ -454,6 +541,9 @@ function CampusContent({
             </text>
           </ScreenAt>
         ))}
+
+      {/* 학생 안내 장소 핀 (이름표는 핀을 피해 놓인다 — spotPins.ts). 입학설명회 안내 모드에서는 말풍선 카드 레이어(eventLayout.ts) */}
+      {eventMode ? <EventLayer interactive={interactive} /> : <SpotPinLayer interactive={interactive} />}
 
       {/* GPS 슬롯 (계약: 파일 상단 주석) */}
       {showGps && <GpsLayer />}

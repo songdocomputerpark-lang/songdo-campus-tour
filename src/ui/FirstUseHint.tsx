@@ -49,6 +49,7 @@ export function FirstUseHint({ isDesktop }: { isDesktop: boolean }) {
   const view = useAppStore((s) => s.view)
   const buildingId = useAppStore((s) => s.buildingId)
   const tourActive = useAppStore((s) => s.tour.active)
+  const eventActive = useAppStore((s) => s.event.active)
   const introOpen = useAppStore((s) => s.ui.intro)
   const gpsWatching = useAppStore((s) => ['requesting', 'tracking', 'timeout', 'error'].includes(s.gps.status))
 
@@ -57,7 +58,7 @@ export function FirstUseHint({ isDesktop }: { isDesktop: boolean }) {
     if (buildingId) markSeen()
   }, [buildingId])
 
-  const show = !hintSeen && screen === 'map' && view === 'campus' && !buildingId && !tourActive && !introOpen && (isDesktop || !gpsWatching)
+  const show = !hintSeen && screen === 'map' && view === 'campus' && !buildingId && !tourActive && !eventActive && !introOpen && (isDesktop || !gpsWatching)
   if (!show) return null
 
   return (

@@ -22,6 +22,20 @@ describe('hash 파싱', () => {
     expect(parseHash('#/tour/0')).toEqual({ kind: 'tour', index: 0 })
     expect(parseHash('#/tour/abc')).toEqual({ kind: 'tour', index: 0 })
   })
+  it('입학설명회 안내: #/event 전체 · #/event/<n> 장소(0 = 출발)', () => {
+    expect(parseHash('#/event')).toEqual({ kind: 'event', spot: null })
+    expect(parseHash('#/event/')).toEqual({ kind: 'event', spot: null })
+    expect(parseHash('#/event/5')).toEqual({ kind: 'event', spot: 5 })
+    expect(parseHash('#/event/0')).toEqual({ kind: 'event', spot: 0 })
+    expect(parseHash('#/event/05')).toEqual({ kind: 'event', spot: 5 })
+  })
+  it('입학설명회 안내: 잘못된 번호는 전체 안내', () => {
+    expect(parseHash('#/event/abc')).toEqual({ kind: 'event', spot: null })
+    expect(parseHash('#/event/-1')).toEqual({ kind: 'event', spot: null })
+    expect(parseHash('#/event/3.5')).toEqual({ kind: 'event', spot: null })
+    expect(parseHash('#/event/12345')).toEqual({ kind: 'event', spot: null })
+    expect(parseHash('#/event/5?x=1')).toEqual({ kind: 'event', spot: 5 })
+  })
   it('보정 화면', () => {
     expect(parseHash('#/calibrate')).toEqual({ kind: 'calibrate' })
   })
@@ -48,6 +62,9 @@ describe('hash 빌드', () => {
     { kind: 'floor', building: 'science', floor: 'B1' },
     { kind: 'room', building: 'main', floor: '2F', room: 'main-2f-c1-1' },
     { kind: 'tour', index: 4 },
+    { kind: 'event', spot: null },
+    { kind: 'event', spot: 0 },
+    { kind: 'event', spot: 9 },
     { kind: 'calibrate' },
   ]
   it('build → parse 왕복', () => {
@@ -56,6 +73,9 @@ describe('hash 빌드', () => {
   it('형식', () => {
     expect(buildHash({ kind: 'campus' })).toBe('#/')
     expect(buildHash({ kind: 'tour', index: 2 })).toBe('#/tour/3')
+    expect(buildHash({ kind: 'event', spot: null })).toBe('#/event')
+    expect(buildHash({ kind: 'event', spot: 5 })).toBe('#/event/5')
+    expect(buildHash({ kind: 'event', spot: 0 })).toBe('#/event/0')
     expect(buildHash({ kind: 'floor', building: 'main', floor: '2F' })).toBe('#/b/main/2F')
   })
 })

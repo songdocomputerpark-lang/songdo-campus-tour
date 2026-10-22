@@ -110,6 +110,29 @@ export function CoreIconInline({ type, size = 20, className }: { type: CoreType;
   )
 }
 
+// ───────────── 학생 안내 장소(★) 표식 ─────────────
+
+/** 원점 중심 오각별 경로 (반지름 r, 꼭짓점이 위) */
+export function starPath(r: number): string {
+  const pts: string[] = []
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5
+    const rr = i % 2 === 0 ? r : r * 0.46
+    pts.push(`${(Math.cos(a) * rr).toFixed(2)} ${(Math.sin(a) * rr).toFixed(2)}`)
+  }
+  return `M${pts.join('L')}Z`
+}
+
+/** 원점 중심 깃발(출발 표시), 높이 ≈ 2r */
+export function flagPath(r: number): string {
+  const s = r / 6
+  return `M${-4 * s} ${6 * s}V${-6 * s}M${-4 * s} ${-5.4 * s}h${7.6 * s}l${-1.9 * s} ${2.6 * s}l${1.9 * s} ${2.6 * s}h${-7.6 * s}`
+}
+
+/** 안내 장소 색: ★ = 엠블럼 금색(남색 글자), 출발 = 남색(흰 글자) */
+export const SPOT_STAR_FILL = 'rgb(var(--star))'
+export const SPOT_START_FILL = 'rgb(var(--navy))'
+
 /** 방위 화살표 본체(0° = 위쪽이 북). 지름 d 의 원 안에 그려진다. */
 export function NorthNeedle({ size = 40 }: { size?: number }) {
   return (

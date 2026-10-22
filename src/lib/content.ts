@@ -1,7 +1,7 @@
 // 런타임 콘텐츠 로더: public/content/{facilities,photos,tour,geo-calibration}.json 을 fetch + 캐시.
 // 실패(404·파싱 오류·오프라인)해도 빈 값으로 동작한다 (SPEC §3). 외부 서버 없음 — 같은 출처의 정적 파일만.
 import { create } from 'zustand'
-import type { Calibration, FacilityMap, PhotoItem, PhotoMap, Tour } from '../data/types'
+import type { Calibration, FacilityMap, PhotoItem, PhotoMap, Tour, TourEvent } from '../data/types'
 
 /** public/ 기준 상대경로 → 현재 배포 위치 기준 URL (base './' 이므로 어느 하위 경로에서도 동작) */
 export function assetUrl(path: string): string {
@@ -104,13 +104,39 @@ function sanitizePhotos(raw: PhotoMap | null): PhotoMap {
   return out
 }
 
-function sanitizeTour(raw: Partial<Tour> | null): Tour {
+export const DEFAULT_EVENT_TITLE = '입학설명회 안내'
+
+/** tour.json 의 event 머리말. 없거나 형식이 틀리면 undefined, 일부만 있으면 빈 칸은 ''(제목은 기본 문구) */
+export function parseEvent(raw: unknown): TourEvent | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const e = raw as Record<string, unknown>
+  const rawTitle = str(e.title).trim()
+  const date = str(e.date).trim()
+  const subtitle = str(e.subtitle).trim()
+  if (!rawTitle && !date && !subtitle) return undefined
+  return { title: rawTitle || DEFAULT_EVENT_TITLE, date, subtitle }
+}
+
+/** tour.json → Tour. stops 가 없으면 빈 투어. 알 수 없는 키(_안내 등)와 잘못된 지점은 무시한다 */
+export function sanitizeTour(raw: Partial<Tour> | null): Tour {
   if (!raw || !Array.isArray(raw.stops)) return EMPTY_TOUR
+  const event = parseEvent(raw.event)
   return {
     title: str(raw.title) || EMPTY_TOUR.title,
+    ...(event ? { event } : {}),
     stops: raw.stops
       .filter((s) => s && typeof s.facility === 'string')
-      .map((s) => ({ facility: s.facility, note: str(s.note) })),
+      .map((s) => {
+        const label = str(s.label).trim()
+        const howto = strList(s.howto).map((h) => h.trim())
+        return {
+          facility: s.facility,
+          note: str(s.note),
+          ...(label ? { label } : {}),
+          ...(s.start === true ? { start: true } : {}),
+          ...(howto.length ? { howto } : {}),
+        }
+      }),
   }
 }
 

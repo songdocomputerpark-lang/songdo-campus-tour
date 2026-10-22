@@ -5,16 +5,20 @@
 //  · 층 전환: 이전 층을 잠시 남겨 두고 위/아래 방향으로 슬라이드+페이드 (CSS animation, index.css .floor-in/.floor-out)
 //  · 방 선택: 같은 모양의 '떠오른' 복제본(외곽선+그림자)을 최상단에 그려 DOM 순서를 바꾸지 않는다(키보드 포커스 유지)
 //  · 접근성: 방 = <g role="button" tabIndex=0 aria-label="본관동 2층 1-1"> (Enter/Space), 목록 보기는 패널(FloorList)
+//  · 학생 안내 장소(★, features/tour/spots): 금빛 바탕·외곽선 + 방 이름 자리에 화면 크기 고정 배지 "★3 중앙현관" (출발 지점은 남색)
+//  · 입학설명회 안내(#/event)에서 들어온 경우(event.active) 선택한 안내 장소 방에는 배지 아래에 부드러운 비콘(파문)이 번진다
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { floorLabel, getBuilding, getFloor } from '../data'
 import type { Building, Bounds, Core, Floor, Insets, Pt, Room } from '../data/types'
+import { spotAria, spotFloorKey, useSpots, type Spot } from '../features/tour/spots'
 import { assetUrl } from '../lib/content'
 import { isNarrowViewport } from '../lib/env'
 import { mix, shade, tint } from '../lib/color'
 import { boundsOf, centroid, expandBounds, polygonPoints } from '../lib/geometry'
+import { estimateTextWidth } from './buildingLabels'
 import { useAppStore } from '../store/useAppStore'
 import { CAT_KEEP } from './categoryTint'
-import { CoreGlyph } from './icons'
+import { CoreGlyph, flagPath, SPOT_START_FILL, SPOT_STAR_FILL, starPath } from './icons'
 import { registerMap } from './mapBus'
 import { MapViewport } from './MapViewport'
 import { LABEL_LINE_HEIGHT, layoutLabel, textEm, type LabelLayout } from './roomLayout'
@@ -112,13 +116,18 @@ interface Palette {
   stroke: string
   sel: string
 }
-function paletteFor(building: Building, cat: Room['cat']): Palette {
+/** ★ 안내 장소 바탕: 건물 색조에 엠블럼 금색을 섞는다 (출발 지점은 건물 색 그대로 — 남색 점선 외곽으로 구분) */
+const STAR_TINT = '#ffd84d'
+
+function paletteFor(building: Building, cat: Room['cat'], spot?: Spot): Palette {
   const keep = CAT_KEEP[cat] ?? 0.4
+  const star = !!spot && spot.no !== null
+  const base = (k: number) => (star ? mix(tint(building.color, k), STAR_TINT, 0.62) : tint(building.color, k))
   return {
-    fill: tint(building.color, keep),
-    hover: tint(building.color, Math.min(1, keep + 0.14)),
+    fill: base(keep),
+    hover: base(Math.min(1, keep + 0.14)),
     stroke: shade(building.color, 0.3),
-    sel: tint(building.color, Math.min(1, keep + 0.22)),
+    sel: base(Math.min(1, keep + 0.22)),
   }
 }
 
@@ -129,6 +138,7 @@ const RoomShape = memo(function RoomShape({
   selected,
   onSelect,
   k,
+  spot,
 }: {
   room: Room
   pal: Palette
@@ -136,6 +146,8 @@ const RoomShape = memo(function RoomShape({
   selected: boolean
   onSelect: (id: string) => void
   k: number
+  /** 학생 안내 장소면 방 이름 대신 SpotBadge 가 이름을 보여 준다 */
+  spot?: Spot
 }) {
   const layout = labelLayout(room)
   const style = { '--f': pal.fill, '--fh': pal.hover, '--s': pal.stroke } as CSSProperties
@@ -151,22 +163,87 @@ const RoomShape = memo(function RoomShape({
       data-hit=""
       data-selected={selected}
       data-conf={room.conf}
+      data-spot={spot ? (spot.no === null ? 'start' : 'star') : undefined}
       role="button"
       tabIndex={0}
-      aria-label={ariaLabel}
+      aria-label={spot ? `${ariaLabel}, ${spotAria(spot)}` : ariaLabel}
       aria-pressed={selected}
       style={style}
       onClick={() => onSelect(room.id)}
       onKeyDown={onKey}
     >
       <polygon className="room-shape" points={polygonPoints(room.poly)} />
-      <RoomLabel layout={layout} sub={room.sub} k={k} />
+      {!spot && <RoomLabel layout={layout} sub={room.sub} k={k} />}
     </g>
   )
 })
 
+// ───────────── 학생 안내 장소 배지 ─────────────
+
+const BADGE_STAR = starPath(7.2)
+const BADGE_FLAG = flagPath(6.4)
+const BADGE_H = 28
+const BADGE_SUB_H = 13
+
+/** 방 이름 자리에 놓이는 화면 크기 고정 배지: "★3 중앙현관" (+ 시설명이 다르면 아래 작은 줄 "현관") */
+function SpotBadge({ room, spot, selected, onSelect }: { room: Room; spot: Spot; selected: boolean; onSelect: (id: string) => void }) {
+  const start = spot.no === null
+  const head = start ? '출발' : String(spot.no)
+  const sub = spot.label !== room.name ? room.name : null
+  const headW = start ? estimateTextWidth(head, 12.5) + 6 : estimateTextWidth(head, 14)
+  const labelW = estimateTextWidth(spot.label, 14)
+  const subW = sub ? estimateTextWidth(sub, 10.5) : 0
+  const lead = 9 + 15 + 4 + headW + 7 // 아이콘 + 번호/출발 + 간격
+  const w = Math.max(lead + labelW + 11, subW + 22)
+  const h = BADGE_H + (sub ? BADGE_SUB_H : 0)
+  const x0 = -w / 2
+  const y0 = -h / 2
+  const cy = y0 + BADGE_H / 2
+  const fg = start ? '#fff' : 'rgb(var(--navy))'
+  return (
+    <g
+      className="spot-badge"
+      data-hit=""
+      aria-hidden="true"
+      style={{ transform: `translate(${room.label[0]}px, ${room.label[1]}px) scale(calc(var(--ik, 1) * var(--ui-scale, 1)))`, cursor: 'pointer' }}
+      onClick={() => onSelect(room.id)}
+    >
+      <rect x={x0 + 1.2} y={y0 + 2.6} width={w} height={h} rx={14} fill="#0b1220" fillOpacity={0.2} />
+      <rect
+        x={x0}
+        y={y0}
+        width={w}
+        height={h}
+        rx={14}
+        style={{
+          fill: start ? SPOT_START_FILL : SPOT_STAR_FILL,
+          stroke: selected ? 'rgb(var(--navy))' : start ? 'rgb(var(--surface))' : 'rgb(var(--star-deep))',
+          strokeWidth: selected ? 2.4 : 1.3,
+        }}
+      />
+      {start ? (
+        <path d={BADGE_FLAG} transform={`translate(${x0 + 9 + 7.5} ${cy})`} fill="none" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      ) : (
+        <path d={BADGE_STAR} transform={`translate(${x0 + 9 + 7.5} ${cy})`} style={{ fill: 'rgb(var(--navy))' }} />
+      )}
+      <text x={x0 + 9 + 15 + 4} y={cy + 0.6} dominantBaseline="central" style={{ fontSize: start ? 12.5 : 14, fontWeight: 800, fill: fg }}>
+        {head}
+      </text>
+      <line x1={x0 + lead - 4} x2={x0 + lead - 4} y1={cy - 7} y2={cy + 7} style={{ stroke: fg, strokeOpacity: 0.35, strokeWidth: 1 }} />
+      <text x={x0 + lead + 1} y={cy + 0.6} dominantBaseline="central" style={{ fontSize: 14, fontWeight: 750, fill: fg }}>
+        {spot.label}
+      </text>
+      {sub && (
+        <text x={0} y={y0 + BADGE_H + BADGE_SUB_H / 2 - 3} textAnchor="middle" dominantBaseline="central" style={{ fontSize: 10.5, fontWeight: 600, fill: fg, opacity: 0.78 }}>
+          {sub}
+        </text>
+      )}
+    </g>
+  )
+}
+
 /** 선택된 방: 그림자 + 떠오른 복제본 + 외곽 강조 (최상단, 포인터 이벤트 없음) */
-function SelectedRoom({ room, pal, k }: { room: Room; pal: Palette; k: number }) {
+function SelectedRoom({ room, pal, k, hideLabel = false }: { room: Room; pal: Palette; k: number; hideLabel?: boolean }) {
   const pts = polygonPoints(room.poly)
   const layout = labelLayout(room)
   return (
@@ -178,9 +255,11 @@ function SelectedRoom({ room, pal, k }: { room: Room; pal: Palette; k: number })
         <polygon points={pts} className="room-sel-halo" />
         <polygon points={pts} className="room-sel-face" style={{ fill: pal.sel }} />
         <polygon points={pts} className="room-sel-edge" />
-        <g className="room">
-          <RoomLabel layout={layout} sub={room.sub} k={k} />
-        </g>
+        {!hideLabel && (
+          <g className="room">
+            <RoomLabel layout={layout} sub={room.sub} k={k} />
+          </g>
+        )}
       </g>
     </g>
   )
@@ -270,11 +349,17 @@ function FloorLayer({
   dir: number
 }) {
   const clipId = `slab-clip-${floor.building}-${floor.floor}-${mode}`
+  const spots = useSpots()
+  const floorSpots = spots.byFloor.get(spotFloorKey(floor.building, floor.floor))
+  const spotOf = useMemo(() => new Map((floorSpots ?? []).map((s) => [s.roomId, s])), [floorSpots])
   const pals = useMemo(() => {
     const m = new Map<string, Palette>()
-    for (const r of floor.rooms) m.set(r.id, paletteFor(building, r.cat))
+    for (const r of floor.rooms) m.set(r.id, paletteFor(building, r.cat, spotOf.get(r.id)))
     return m
-  }, [floor, building])
+  }, [floor, building, spotOf])
+  const spotRooms = floor.rooms.filter((r) => spotOf.has(r.id))
+  const eventActive = useAppStore((s) => s.event.active)
+  const beaconRoom = eventActive && mode === 'current' && selectedId && spotOf.has(selectedId) ? floor.rooms.find((r) => r.id === selectedId) : undefined
   const slabFill = mix('#fffdf8', building.color, 0.09)
   const selectedRoom = selectedId ? floor.rooms.find((r) => r.id === selectedId) : undefined
   const coreColor = shade(building.color, 0.55)
@@ -312,8 +397,21 @@ function FloorLayer({
           selected={r.id === selectedId}
           onSelect={onSelect}
           k={k}
+          spot={spotOf.get(r.id)}
         />
       ))}
+
+      {/* 학생 안내 장소: 금빛 외곽 (방 위, 포인터 없음) */}
+      {spotRooms.map((r) => {
+        const kind = spotOf.get(r.id)!.no === null ? 'start' : 'star'
+        const pts = polygonPoints(r.poly)
+        return (
+          <g key={`spot-${r.id}`} pointerEvents="none">
+            <polygon points={pts} className="spot-glow" data-kind={kind} />
+            <polygon points={pts} className="spot-edge" data-kind={kind} />
+          </g>
+        )
+      })}
 
       {/* 슬랩 외곽선(방 위) */}
       <polygon points={polygonPoints(floor.slab)} className="slab-edge" pointerEvents="none" />
@@ -323,7 +421,20 @@ function FloorLayer({
         <CoreShape key={i} core={c} slab={floor.slab} k={k} color={coreColor} />
       ))}
 
-      {selectedRoom && <SelectedRoom room={selectedRoom} pal={pals.get(selectedRoom.id)!} k={k} />}
+      {selectedRoom && <SelectedRoom room={selectedRoom} pal={pals.get(selectedRoom.id)!} k={k} hideLabel={spotOf.has(selectedRoom.id)} />}
+
+      {/* 안내 모드에서 들어온 선택 장소: 비콘 파문 (배지 아래) */}
+      {beaconRoom && (
+        <ScreenAt x={beaconRoom.label[0]} y={beaconRoom.label[1]}>
+          <circle className="floor-beacon" data-b="1" r={15} />
+          <circle className="floor-beacon" data-b="2" r={15} />
+        </ScreenAt>
+      )}
+
+      {/* 안내 장소 배지는 맨 위 (선택된 방의 떠오른 복제본보다도 위) */}
+      {spotRooms.map((r) => (
+        <SpotBadge key={`badge-${r.id}`} room={r} spot={spotOf.get(r.id)!} selected={r.id === selectedId} onSelect={onSelect} />
+      ))}
     </g>
   )
 }

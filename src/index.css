@@ -33,6 +33,9 @@
   --leaf-soft: 214 236 220;
   --surface: 255 253 248;
   --danger: 176 42 42;
+  --star: 255 196 11; /* 학생 안내 장소 ★ (엠블럼 금색 #ffc40b) — 남색 글자와 대비 AA */
+  --star-deep: 150 108 0; /* ★ 외곽선 */
+  --star-soft: 255 236 170;
 
   --ease-out: cubic-bezier(0.22, 0.8, 0.24, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.25, 1);
@@ -464,6 +467,67 @@ html {
   transition: opacity 240ms ease;
 }
 
+/* 학생 안내 장소(★) — 캠퍼스 핀 · 평면도 강조 */
+.spot-row {
+  cursor: pointer;
+  outline: none;
+}
+.spot-row[tabindex='-1'] {
+  cursor: default;
+}
+@media (hover: hover) {
+  .spot-row:hover .spot-row-face {
+    filter: brightness(1.04);
+    stroke-width: 2px;
+  }
+}
+.spot-row:focus-visible .spot-row-face {
+  stroke: rgb(var(--navy)) !important;
+  stroke-width: 2.6px !important;
+}
+.spot-pulse {
+  fill: rgb(var(--star) / 0.5);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: spot-pulse 2.6s ease-out infinite;
+}
+.spot-pulse[data-kind='start'] {
+  fill: rgb(var(--navy) / 0.35);
+}
+@keyframes spot-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+.spot-edge {
+  fill: none;
+  stroke: rgb(var(--star-deep));
+  stroke-width: 2.6px;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.spot-glow {
+  fill: none;
+  stroke: rgb(var(--star) / 0.55);
+  stroke-width: 9px;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.spot-edge[data-kind='start'] {
+  stroke: rgb(var(--navy));
+  stroke-dasharray: 7 4;
+}
+.spot-glow[data-kind='start'] {
+  stroke: rgb(var(--navy) / 0.18);
+}
+
 /* 시트/패널 */
 .sheet-scroll {
   scrollbar-width: none;
@@ -507,5 +571,225 @@ html {
   }
   to {
     transform: scale(1.07) translate(-1.2%, 1%);
+  }
+}
+
+/* ────────────────────────── 입학설명회 안내 (#/event) — 캠퍼스 지도 ────────────────────────── */
+/* 안내 장소가 없는 건물·부속 건물은 흐리게(채도↓), 있는 건물은 금빛 테두리(부드러운 후광 + 또렷한 선) */
+.bld[data-ev='muted'] {
+  opacity: 0.4;
+  filter: saturate(0.3);
+  cursor: default;
+}
+.minor-shape {
+  transition: opacity 420ms ease;
+}
+.minor-shape[data-muted='true'] {
+  opacity: 0.45;
+}
+.ev-ring {
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.ev-ring-o {
+  stroke: rgb(var(--star) / 0.2);
+  stroke-width: 20px;
+}
+.ev-ring-m {
+  stroke: rgb(var(--star) / 0.34);
+  stroke-width: 10px;
+}
+.ev-ring-i {
+  stroke: rgb(var(--star));
+  stroke-width: 2.6px;
+}
+/* 선택한 장소의 건물: 후광이 숨 쉬듯 (모션 최소화 설정이면 정지) */
+.ev-ring-set[data-sel='true'] .ev-ring-o {
+  animation: ev-breathe 1.9s ease-in-out infinite;
+}
+.ev-ring-set[data-sel='true'] .ev-ring-m {
+  stroke: rgb(var(--star) / 0.55);
+}
+@keyframes ev-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    stroke-width: 16px;
+  }
+  50% {
+    opacity: 1;
+    stroke-width: 30px;
+  }
+}
+
+/* 말풍선 카드 */
+.ev-card {
+  transition: opacity 320ms ease;
+}
+.ev-card[data-faded='true'] {
+  opacity: 0.72;
+}
+.ev-card-shadow {
+  fill: #0b1220;
+  fill-opacity: 0.17;
+}
+.ev-card-body {
+  fill: rgb(var(--surface));
+  stroke: rgb(var(--line-strong));
+  stroke-width: 1.1px;
+}
+.ev-card-body[data-sel='true'] {
+  stroke: rgb(var(--navy));
+  stroke-width: 2.2px;
+}
+.ev-card[data-hover='true'] .ev-card-body {
+  stroke: rgb(var(--star-deep));
+  stroke-width: 2px;
+}
+.ev-card-rule {
+  stroke: rgb(var(--line));
+  stroke-width: 1px;
+}
+.ev-row-bg {
+  fill: transparent;
+  transition: fill 160ms ease;
+}
+.ev-row-bg[data-on='true'] {
+  fill: rgb(var(--star-soft) / 0.75);
+}
+.ev-row[data-active='true'] .ev-row-bg {
+  fill: rgb(var(--star-soft));
+  stroke: rgb(var(--star-deep) / 0.6);
+  stroke-width: 1px;
+}
+@media (hover: hover) {
+  .ev-row:hover .ev-row-bg {
+    fill: rgb(var(--star-soft) / 0.75);
+  }
+}
+.ev-stem {
+  fill: none;
+  stroke: rgb(var(--navy) / 0.7);
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+}
+.ev-stem-end {
+  fill: rgb(var(--navy) / 0.8);
+}
+.ev-tie {
+  stroke: rgb(var(--navy) / 0.55);
+  stroke-width: 1.4px;
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.ev-compact-face {
+  fill: rgb(var(--star));
+  stroke: rgb(var(--star-deep));
+  stroke-width: 1.2px;
+}
+.ev-compact[data-start='true'] .ev-compact-face {
+  fill: rgb(var(--navy));
+  stroke: rgb(var(--surface));
+  stroke-width: 1.6px;
+}
+.ev-compact[data-sel='true'] .ev-compact-face {
+  stroke: rgb(var(--navy));
+  stroke-width: 2.4px;
+}
+.ev-compact[data-sel='true'][data-start='true'] .ev-compact-face {
+  stroke: rgb(var(--star));
+}
+.ev-pin-pulse {
+  fill: rgb(var(--star) / 0.5);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: spot-pulse 2.1s ease-out infinite;
+}
+/* 처음 들어올 때 카드·핀이 차례로 (총 ≤ 900ms: 지연 80ms + 65ms × 순번(최대 5) + 460ms) */
+.ev-layer[data-reveal] .ev-reveal {
+  animation: ev-pop 460ms var(--ease-out) both;
+  animation-delay: calc(80ms + var(--i, 0) * 65ms);
+}
+@keyframes ev-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 출입구 화살표 */
+.ev-entrance-arrow {
+  fill: rgb(var(--gold));
+  stroke: rgb(var(--surface));
+  stroke-width: 1.5px;
+  stroke-linejoin: round;
+}
+.ev-entrance[data-sel='true'] .ev-entrance-arrow {
+  fill: rgb(var(--star));
+  stroke: rgb(var(--navy));
+}
+.ev-entrance-text {
+  font-size: 10.5px;
+  font-weight: 700;
+  fill: rgb(var(--gold-deep));
+  paint-order: stroke;
+  stroke: rgb(var(--surface));
+  stroke-width: 3.5px;
+  stroke-linejoin: round;
+}
+
+/* GPS: 내 위치 → 안내 장소 직선 (경로가 아니다) */
+.ev-gps-line-halo {
+  stroke: rgb(var(--surface));
+  stroke-opacity: 0.85;
+  stroke-width: 6px;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.ev-gps-line {
+  stroke: rgb(var(--leaf));
+  stroke-width: 2.6px;
+  stroke-dasharray: 8 7;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.ev-gps-end {
+  fill: rgb(var(--surface));
+  stroke: rgb(var(--leaf));
+  stroke-width: 2.4px;
+}
+
+/* 층 평면도: 안내 장소 방의 비콘(부드러운 파문) */
+.floor-beacon {
+  fill: none;
+  stroke: rgb(var(--star-deep));
+  stroke-width: 2.4px;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: beacon 2.4s ease-out infinite backwards;
+  pointer-events: none;
+}
+.floor-beacon[data-b='2'] {
+  animation-delay: 1.2s;
+}
+@keyframes beacon {
+  0% {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
   }
 }

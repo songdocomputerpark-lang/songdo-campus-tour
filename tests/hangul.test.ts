@@ -34,7 +34,7 @@ describe('매처', () => {
   it('공백/구두점 무시', () => {
     expect(hangulMatch('학생 회실', '학생회')).toBe(true)
     expect(hangulMatch('학생회실', '학 생 회')).toBe(true)
-    expect(hangulMatch('홈베이스(숲터)', '홈베이스 숲터')).toBe(true)
+    expect(hangulMatch('홈베이스(숨터)', '홈베이스 숨터')).toBe(true)
     expect(normalizeQuery(' 1 - 1 ')).toBe('11')
   })
   it('부분 일치 위치와 영문 대소문자', () => {

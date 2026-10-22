@@ -4,6 +4,8 @@
 //   #/b/main/2F                     층 평면도
 //   #/b/main/2F/main-2f-c1-1        방 선택
 //   #/tour/3                        추천 투어 3번째 지점 (1-based)
+//   #/event                         입학설명회 안내(전체)
+//   #/event/5                       입학설명회 안내: ★5 장소 (0 = 출발 지점)
 //   #/calibrate                     위치 보정(관리자)
 import { getFloor, getRoom, isBuildingId, isFloorId } from '../data'
 import type { BuildingId, FloorId } from '../data/types'
@@ -14,6 +16,7 @@ export type Route =
   | { kind: 'floor'; building: BuildingId; floor: FloorId }
   | { kind: 'room'; building: BuildingId; floor: FloorId; room: string }
   | { kind: 'tour'; /** 0-based */ index: number }
+  | { kind: 'event'; /** 별표 번호(1~), 0 = 출발 지점, null = 전체 안내 */ spot: number | null }
   | { kind: 'calibrate' }
 
 export function parseHash(hash: string): Route {
@@ -32,6 +35,12 @@ export function parseHash(hash: string): Route {
   if (seg[0] === 'tour') {
     const n = parseInt(seg[1] ?? '1', 10)
     return { kind: 'tour', index: Number.isFinite(n) && n >= 1 ? n - 1 : 0 }
+  }
+
+  if (seg[0] === 'event') {
+    if (seg[1] === undefined) return { kind: 'event', spot: null }
+    const n = /^[0-9]+$/.test(seg[1]) ? parseInt(seg[1], 10) : NaN
+    return { kind: 'event', spot: Number.isFinite(n) && n <= 99 ? n : null }
   }
 
   if (seg[0] === 'b' && seg[1]) {
@@ -60,6 +69,8 @@ export function buildHash(r: Route): string {
       return `#/b/${r.building}/${r.floor}/${r.room}`
     case 'tour':
       return `#/tour/${r.index + 1}`
+    case 'event':
+      return r.spot === null ? '#/event' : `#/event/${r.spot}`
     case 'calibrate':
       return '#/calibrate'
   }

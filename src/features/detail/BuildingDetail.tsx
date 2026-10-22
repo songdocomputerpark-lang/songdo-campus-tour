@@ -4,6 +4,7 @@
  *  건물명 · 영문 · 규모(dims) → 건물 사진(photos["building-<id>"], 없으면 외곽선 모형 플레이스홀더)
  *  → 층/시설 수 요약 → 시설 구성(카테고리별 개수) → 층별 안내(층마다 시설 수·대표 시설, 탭하면 그 층 평면도로)
  *
+ * 학생 안내 장소(★, content/tour.json)가 있는 건물이면 사진 위에 그 목록을 먼저 보여 준다 (탭하면 안내 코스의 그 지점으로).
  * 모든 수치는 floors.json / campus.json 에서 계산한다 (없는 정보를 만들지 않는다).
  * 사용: ui/Shell 이 캠퍼스 지도에서 건물을 선택했을 때(roomId 없음) 패널에 렌더하며, DetailPanel 도 roomId 없이 렌더되면 이 컴포넌트로 대체한다
  *   (export function BuildingDetail — props 없음, 스토어의 buildingId 사용).
@@ -17,6 +18,8 @@ import { photosFor, useContent } from '../../lib/content'
 import { CAT_KEEP } from '../../map/categoryTint'
 import { useAppStore } from '../../store/useAppStore'
 import { PanelHeader } from '../../ui/PanelHeader'
+import { SpotMark } from '../tour/SpotChip'
+import { spotFloorKey, useSpots } from '../tour/spots'
 import { PhotoSlot } from './PhotoSlot'
 
 const CAT_ORDER = Object.keys(campus.categories) as CategoryId[]
@@ -25,7 +28,9 @@ export function BuildingDetail() {
   const buildingId = useAppStore((s) => s.buildingId)
   const selectFloor = useAppStore((s) => s.selectFloor)
   const closePanel = useAppStore((s) => s.closePanel)
+  const startTour = useAppStore((s) => s.startTour)
   const photos = useContent((s) => s.photos)
+  const spots = useSpots()
   const building = getBuilding(buildingId)
 
   const floors = useMemo(() => (building ? floorsOf(building.id).reverse() : []), [building])
@@ -45,6 +50,7 @@ export function BuildingDetail() {
   const bPhotos = photosFor(photos, `building-${building.id}`)
   const hasBasement = building.floors.includes('B1')
   const aboveGround = building.floors.filter((f) => f !== 'B1').length
+  const here = spots.byBuilding.get(building.id) ?? []
 
   return (
     <article aria-label={`${building.name} 안내`}>
@@ -66,6 +72,38 @@ export function BuildingDetail() {
       />
 
       <div key={building.id} className="animate-fade-in px-5 pb-8">
+        {here.length > 0 && (
+          <section className="mb-4 overflow-hidden rounded-card border border-star-deep/35 bg-star-soft/55" aria-labelledby="bd-spots">
+            <h3 id="bd-spots" className="flex items-baseline gap-2.5 px-3.5 pb-1 pt-3">
+              <span className="eyebrow text-gold-deep">Student Guide</span>
+              <span className="text-[0.875rem] font-semibold text-ink">학생 안내 장소</span>
+            </h3>
+            <ul className="px-1.5 pb-1.5">
+              {here.map((s) => (
+                <li key={s.roomId}>
+                  <button
+                    type="button"
+                    onClick={() => startTour(s.index)}
+                    aria-label={`${s.no === null ? '출발 지점' : `학생 안내 장소 ${s.no}번`} ${s.label}, ${floorLabel(s.floorId)}. 안내 코스에서 보기`}
+                    className="group flex min-h-[2.75rem] w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-surface/80"
+                  >
+                    <SpotMark spot={s} size={28} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[0.9375rem] font-bold text-ink">{s.label}</span>
+                      <span className="block truncate text-[0.75rem] text-ink-mute">
+                        {floorLabel(s.floorId)}
+                        {s.label !== s.roomName && ` · ${s.roomName}`}
+                        {s.no === null && ' · 안내 코스 출발'}
+                      </span>
+                    </span>
+                    <ChevronRight size={17} className="shrink-0 text-ink-mute transition-transform duration-180 group-hover:translate-x-0.5" aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <PhotoSlot photos={bPhotos} alt={`${building.name} 사진`} buildingId={building.id} placeholderLabel="건물 사진 준비 중" />
 
         {/* 요약 지표 */}
@@ -97,12 +135,13 @@ export function BuildingDetail() {
           <ul className="grid gap-2">
             {floors.map((f) => {
               const named = f.rooms.filter((r) => r.cat !== 'classroom').slice(0, 3).map((r) => r.name)
+              const fSpots = spots.byFloor.get(spotFloorKey(building.id, f.floor)) ?? []
               return (
                 <li key={f.floor}>
                   <button
                     type="button"
                     onClick={() => selectFloor(f.floor, building.id)}
-                    aria-label={`${building.name} ${floorLabel(f.floor)} 평면도 보기, 시설 ${f.rooms.length}곳${f.schematic ? ', 개략도' : ''}`}
+                    aria-label={`${building.name} ${floorLabel(f.floor)} 평면도 보기, 시설 ${f.rooms.length}곳${f.schematic ? ', 개략도' : ''}${fSpots.length ? `, 학생 안내 장소 ${fSpots.map((s) => s.label).join(', ')}` : ''}`}
                     className="group flex min-h-[3.5rem] w-full items-center gap-3.5 rounded-card border border-line bg-surface/70 px-3.5 py-2.5 text-left transition-[border-color,background-color,transform,box-shadow] duration-180 hover:border-navy/40 hover:bg-surface hover:shadow-soft active:scale-[0.99]"
                   >
                     <span className="grid h-10 w-12 shrink-0 place-items-center rounded-xl font-display text-[1.375rem] font-semibold leading-none text-white" style={{ background: building.color, fontVariantNumeric: 'lining-nums tabular-nums' }} aria-hidden="true">
@@ -114,7 +153,18 @@ export function BuildingDetail() {
                         <span className="tnum text-[0.8125rem] font-normal text-ink-mute">시설 {f.rooms.length}곳</span>
                         {f.schematic && <span className="rounded-full border border-gold/50 bg-gold-soft/60 px-1.5 text-[0.6875rem] font-semibold text-gold-deep">개략도</span>}
                       </span>
-                      <span className="block truncate text-[0.8125rem] text-ink-mute">{named.length > 0 ? named.join(' · ') : '학급교실'}</span>
+                      {fSpots.length > 0 ? (
+                        <span className="mt-0.5 flex flex-wrap gap-1">
+                          {fSpots.map((s) => (
+                            <span key={s.roomId} className={`inline-flex items-center gap-1 rounded-full py-px pl-px pr-2 text-[0.75rem] font-bold ${s.no === null ? 'bg-navy text-white' : 'bg-star text-navy'}`}>
+                              <SpotMark spot={s} size={16} />
+                              {s.label}
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="block truncate text-[0.8125rem] text-ink-mute">{named.length > 0 ? named.join(' · ') : '학급교실'}</span>
+                      )}
                     </span>
                     <ChevronRight size={18} className="shrink-0 text-ink-mute transition-transform duration-180 group-hover:translate-x-0.5" aria-hidden="true" />
                   </button>

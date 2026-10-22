@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useContent } from '../src/lib/content'
-import { routeFromState, useAppStore } from '../src/store/useAppStore'
+import { dropUnknownEventSpot, routeFromState, useAppStore } from '../src/store/useAppStore'
 
 const S = () => useAppStore.getState()
 
@@ -219,5 +219,127 @@ describe('기타 상태', () => {
     expect(S().insets).toEqual({ top: 1, right: 2, bottom: 3, left: 4 })
     S().setInsets({ top: 1, right: 2, bottom: 3, left: 4 }) // 같은 값은 상태 교체 없음
     expect(S().insets).not.toBe(before)
+  })
+})
+
+describe('입학설명회 안내(event)', () => {
+  const EVENT_TOUR = {
+    title: '설명회',
+    event: { title: '입학설명회 안내', date: '2026. 10. 31.(토)', subtitle: '부제' },
+    stops: [
+      { facility: 'gym-4f-p91', note: '출발', label: '체육관', start: true },
+      { facility: 'main-1f-lobby', note: 'a', label: '중앙현관' },
+      { facility: 'library-1f-p62', note: 'b', label: '도서관' },
+      { facility: 'library-2f-p68', note: 'c', label: '아우름터' },
+    ],
+  }
+  beforeEach(() => {
+    useContent.setState({ tour: EVENT_TOUR, status: 'ready' })
+    S().goCampus()
+  })
+
+  it('openEvent: 안내 모드 + 패널 열림, hash 경로는 event', () => {
+    S().openEvent()
+    expect(S().event).toEqual({ active: true, spotNo: null })
+    expect(S().view).toBe('campus')
+    expect(S().buildingId).toBeNull()
+    expect(S().panel.open).toBe(true)
+    expect(routeFromState(S())).toEqual({ kind: 'event', spot: null })
+    S().openEvent(2)
+    expect(S().event.spotNo).toBe(2)
+    expect(routeFromState(S())).toEqual({ kind: 'event', spot: 2 })
+  })
+
+  it('eventStep: 출발(0) → ★1 → … → 끝에서 멈춤, 전체 안내에서 다음 = 출발', () => {
+    S().openEvent(null)
+    S().eventStep(1)
+    expect(S().event.spotNo).toBe(0)
+    S().eventStep(-1) // 출발 앞은 없음
+    expect(S().event.spotNo).toBe(0)
+    S().eventStep(1)
+    expect(S().event.spotNo).toBe(1)
+    S().eventStep(1)
+    S().eventStep(1)
+    expect(S().event.spotNo).toBe(3)
+    S().eventStep(1) // 마지막에서 더 가지 않음
+    expect(S().event.spotNo).toBe(3)
+    S().eventStep(-1)
+    expect(S().event.spotNo).toBe(2)
+  })
+
+  it('eventShowFloor: 안내 모드를 유지한 채 평면도로, exitFloor 는 그 장소의 안내로 돌아간다', () => {
+    S().openEvent(2)
+    S().eventShowFloor(2)
+    expect(S().view).toBe('floor')
+    expect(S().roomId).toBe('library-1f-p62')
+    expect(S().event).toEqual({ active: true, spotNo: 2 })
+    expect(routeFromState(S())).toEqual({ kind: 'room', building: 'library', floor: '1F', room: 'library-1f-p62' })
+    S().exitFloor()
+    expect(S().view).toBe('campus')
+    expect(S().event).toEqual({ active: true, spotNo: 2 })
+    expect(routeFromState(S())).toEqual({ kind: 'event', spot: 2 })
+  })
+
+  it('평면도에서 안내 장소의 다른 방을 고르면 돌아갈 번호가 따라간다 (층 이동은 안내 모드 유지)', () => {
+    S().openEvent(1)
+    S().eventShowFloor(1)
+    S().selectRoom('library-2f-p68')
+    expect(S().event).toEqual({ active: true, spotNo: 3 })
+    S().selectFloor('1F', 'library')
+    expect(S().event.active).toBe(true)
+  })
+
+  it('closePanel: 장소 → 전체 안내 → 패널만 닫기(안내 모드 유지)', () => {
+    S().openEvent(3)
+    S().closePanel()
+    expect(S().event).toEqual({ active: true, spotNo: null })
+    expect(S().panel.open).toBe(true)
+    S().closePanel()
+    expect(S().panel.open).toBe(false)
+    expect(S().event.active).toBe(true)
+  })
+
+  it('goCampus · selectBuilding · startTour 는 안내 모드를 끝낸다', () => {
+    S().openEvent(1)
+    S().goCampus()
+    expect(S().event.active).toBe(false)
+    S().openEvent(1)
+    S().selectBuilding('main')
+    expect(S().event.active).toBe(false)
+    S().openEvent(1)
+    S().startTour(0)
+    expect(S().event.active).toBe(false)
+    expect(S().tour.active).toBe(true)
+    S().openEvent(null) // 안내를 열면 투어는 끝난다
+    expect(S().tour.active).toBe(false)
+    expect(S().event.active).toBe(true)
+  })
+
+  it('없는 번호는 콘텐츠가 로드되면 전체 안내로 되돌린다', () => {
+    S().openEvent(99)
+    useContent.setState({ tour: { ...EVENT_TOUR, stops: [...EVENT_TOUR.stops] } }) // 콘텐츠 다시 로드
+    expect(S().event).toEqual({ active: true, spotNo: null })
+  })
+
+  it('dropUnknownEventSpot: 콘텐츠가 준비된 뒤에만, 없는 번호만 전체 안내로 (있는 번호는 그대로)', () => {
+    S().openEvent(2)
+    dropUnknownEventSpot()
+    expect(S().event.spotNo).toBe(2)
+    S().openEvent(99)
+    useContent.setState({ status: 'loading' })
+    dropUnknownEventSpot() // 아직 로드 중이면 판단하지 않는다 (딥링크 #/event/5 를 지우지 않게)
+    expect(S().event.spotNo).toBe(99)
+    useContent.setState({ status: 'ready' })
+    dropUnknownEventSpot()
+    expect(S().event).toEqual({ active: true, spotNo: null })
+    S().goCampus()
+    dropUnknownEventSpot() // 안내 모드가 아니면 아무 일도 하지 않는다
+    expect(S().event.active).toBe(false)
+  })
+
+  it('dismissIntro("event") 는 안내를 연다', () => {
+    S().dismissIntro('event')
+    expect(S().event.active).toBe(true)
+    expect(S().ui.intro).toBe(false)
   })
 })

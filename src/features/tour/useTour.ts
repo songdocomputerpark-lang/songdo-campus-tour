@@ -6,7 +6,8 @@
  *  - 자동 진행: autoplay ON 이면 지점마다 12초 뒤 다음 지점으로(마지막 지점에서는 멈춤). 사진은 Gallery 가 4초 간격으로 넘긴다.
  *    사용자가 조작하면(이전/다음/점 탭/지도 드래그·휠·키/사진 조작) 즉시 일시정지(store.setAutoplay(false)).
  *    타이머는 모듈 단위 엔진 하나가 store 를 구독해 구동한다 — 훅을 여러 곳에서 써도 타이머는 하나.
- *  - announce: aria-live 안내문 ("3 / 14 · 본관동 · 2층 1-1").
+ *  - 학생 안내 장소: 지점마다 표시 이름(label)·별표 번호(no, 출발 지점은 null)를 spots.ts 색인에서 받아 지도 ★ 번호와 맞춘다.
+ *  - announce: aria-live 안내문 ("★3 / 9 · 본관동 · 1층 중앙현관", 출발 지점은 "출발 · 체육관동 · 4층 체육관").
  */
 import { useCallback, useEffect, useMemo } from 'react'
 import { campus, classroomSubtitle, floorLabel, getRoom } from '../../data'
@@ -14,6 +15,7 @@ import type { BuildingId, CategoryId, FloorId } from '../../data/types'
 import { useContent } from '../../lib/content'
 import { useAppStore } from '../../store/useAppStore'
 import { toast } from '../../ui/Toast'
+import { spotsFor } from './spots'
 
 /** 지점당 자동 진행 시간 */
 export const TOUR_STEP_MS = 12_000
@@ -24,7 +26,13 @@ export interface ResolvedStop {
   /** tour.json 안의 원래 위치(0-based) — store.tour.index 와 같은 기준 */
   index: number
   roomId: string
+  /** floors.json 의 시설명 */
   name: string
+  /** 표시 이름 (tour.json label, 없으면 시설명) */
+  label: string
+  /** 학생 안내 장소 별표 번호(1부터). 출발 지점은 null */
+  no: number | null
+  start: boolean
   sub: string | null
   /** 교실이면 "1학년 1반 교실 · 2025 배치도 기준" (이름 "1-1" 에서 읽음), 아니면 null */
   classroomLabel: string | null
@@ -47,6 +55,8 @@ export interface TourApi {
   stops: ResolvedStop[]
   /** tour.json 의 전체 지점 수 */
   total: number
+  /** 별표(학생 안내 장소) 지점 수 — 출발 지점 제외 */
+  starTotal: number
   index: number
   current: ResolvedStop | null
   /** 0..1 */
@@ -166,16 +176,21 @@ export function useTour(): TourApi {
   const endTour = useAppStore((s) => s.endTour)
   const setAutoplay = useAppStore((s) => s.setAutoplay)
 
+  const spots = spotsFor(tourData)
   const stops = useMemo<ResolvedStop[]>(
     () =>
       tourData.stops.flatMap((st, i) => {
         const ref = getRoom(st.facility)
         if (!ref) return []
+        const spot = spots.byRoom.get(ref.room.id)
         return [
           {
             index: i,
             roomId: ref.room.id,
             name: ref.room.name,
+            label: spot?.label ?? ref.room.name,
+            no: spot && spot.index === i ? spot.no : null,
+            start: !!spot && spot.index === i && spot.start,
             sub: ref.room.sub,
             classroomLabel: classroomSubtitle(ref.room),
             note: st.note,
@@ -191,10 +206,11 @@ export function useTour(): TourApi {
           },
         ]
       }),
-    [tourData],
+    [tourData, spots],
   )
 
   const total = tourData.stops.length
+  const starTotal = spots.stars.length
   const current = useMemo(() => stops.find((s) => s.index === index) ?? null, [stops, index])
   const isFirst = index <= 0
   const isLast = total > 0 && index >= total - 1
@@ -234,7 +250,7 @@ export function useTour(): TourApi {
   }, [endTour])
 
   const announce = current
-    ? `${index + 1} / ${total} · ${current.locationText} ${current.name}${isLast ? '. 마지막 지점입니다' : ''}`
+    ? `${current.no !== null ? `★${current.no} / ${starTotal}` : current.start ? '출발' : `${index + 1} / ${total}`} · ${current.locationText} ${current.label}${isLast ? '. 마지막 지점입니다' : ''}`
     : ''
 
   return {
@@ -242,6 +258,7 @@ export function useTour(): TourApi {
     title: tourData.title,
     stops,
     total,
+    starTotal,
     index,
     current,
     progress: total > 1 ? index / (total - 1) : 0,

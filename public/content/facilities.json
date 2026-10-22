@@ -2,7 +2,7 @@
  "_안내": "시설별 소개 문구를 입력하세요. summary=한 줄 소개, description=본문, features=주요 장비·특징 목록, activities=교육활동 목록. 비워 두면 화면에 \"내용 준비 중\"으로 표시됩니다. 사진은 public/photos/<시설ID>/ 폴더에 넣고 npm run photos 를 실행하세요.",
  "facilities": {
   "main-1f-p1": {
-   "name": "홈베이스(숲터)",
+   "name": "홈베이스(숨터)",
    "location": "본관동 1층",
    "summary": "",
    "description": "",

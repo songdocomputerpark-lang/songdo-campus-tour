@@ -8,6 +8,7 @@
 //  roomId      선택된 시설(방). selectRoom() 은 건물·층까지 함께 이동한다
 //  panel       상세 패널 열림 + 모바일 시트 스냅(peek|half|full) — 데스크톱은 open 만 사용
 //  tour        추천 투어 {active, index(0-based), autoplay}
+//  event       입학설명회 안내 {active, spotNo}  spotNo: 별표 번호(1~), 0 = 출발 지점, null = 전체 안내
 //  gps         {status, fix, error, consented}  — 좌표는 메모리에만 (저장·전송 금지)
 //  search      {open}
 //  ui          {intro, showPlanLayer, legend, aboutOpen}
@@ -19,11 +20,18 @@
 //  지점의 시설이면 투어를 유지한다. 투어 지점 이동 시 building→floor→room 이 자동 선택된다.
 //
 // ── hash ───────────────────────────────────────────────────────────────────
-//  #/ · #/b/main · #/b/main/2F · #/b/main/2F/<roomId> · #/tour/<n(1-based)> · #/calibrate
-//  건물/층/화면이 바뀌면 pushState(뒤로 가기 지원), 방 선택·투어 단계 이동은 replaceState.
+//  #/ · #/b/main · #/b/main/2F · #/b/main/2F/<roomId> · #/tour/<n(1-based)> · #/event · #/event/<n(0=출발)> · #/calibrate
+//  건물/층/화면이 바뀌면 pushState(뒤로 가기 지원), 방 선택·투어 단계 이동·안내 장소 이동은 replaceState.
+//
+// ── 입학설명회 안내(event) ───────────────────────────────────────────────────
+//  event.active 이면 캠퍼스 지도는 '안내 모드'(안내 장소 건물만 강조 + 말풍선 카드)이고 패널은 EventPanel.
+//  층 평면도(view=floor)로 들어가도 event.active 는 유지되어 "← 설명회 안내" 로 #/event/<n> 에 돌아올 수 있다(그동안 hash 는 평면도 경로).
+//  goCampus/selectBuilding/startTour/openCalibrate 는 안내 모드를 끝낸다. selectFloor/selectRoom/stepFloor 는 유지한다.
 import { create } from 'zustand'
 import { floorIndex, floorsOf, getBuilding, getFloor, getRoom } from '../data'
 import type { BuildingId, FloorId, Insets } from '../data/types'
+import { spotByNo, spotNoOf, stepSpot } from '../features/event/eventModel'
+import { getSpots, spotsFor } from '../features/tour/spots'
 import { useContent } from '../lib/content'
 import { isDesktopViewport } from '../lib/env'
 import { buildHash, parseHash, type Route } from './hash'
@@ -62,6 +70,12 @@ export interface GpsState {
   consented: boolean
 }
 
+export interface EventState {
+  active: boolean
+  /** 별표 번호(1~), 0 = 출발 지점, null = 전체 안내 */
+  spotNo: number | null
+}
+
 export interface AppState {
   screen: Screen
   view: View
@@ -72,6 +86,7 @@ export interface AppState {
   floorDir: -1 | 0 | 1
   panel: { open: boolean; snap: PanelSnap }
   tour: { active: boolean; index: number; autoplay: boolean }
+  event: EventState
   gps: GpsState
   search: { open: boolean }
   ui: { intro: boolean; showPlanLayer: boolean; legend: boolean; aboutOpen: boolean }
@@ -99,6 +114,15 @@ export interface AppState {
   tourPrev: () => void
   endTour: () => void
   setAutoplay: (on: boolean) => void
+  // 입학설명회 안내
+  /** 안내 모드로 들어가 전체 안내(null) 또는 한 장소(0 = 출발, 1~ = ★)를 보여 준다 */
+  openEvent: (spotNo?: number | null) => void
+  /** 안내 장소 이전(-1)/다음(+1). 출발 → ★1 → … → ★N */
+  eventStep: (dir: 1 | -1) => void
+  /** 안내 모드는 유지한 채 그 장소의 평면도를 연다 */
+  eventShowFloor: (spotNo: number) => void
+  /** 안내 모드 끝(전체 지도) */
+  closeEvent: () => void
   // GPS
   setGps: (patch: Partial<GpsState>) => void
   resetGps: () => void
@@ -106,7 +130,7 @@ export interface AppState {
   openSearch: () => void
   closeSearch: () => void
   // UI
-  dismissIntro: (next?: 'tour' | 'free') => void
+  dismissIntro: (next?: 'tour' | 'free' | 'event') => void
   setShowPlanLayer: (on: boolean) => void
   setLegend: (on: boolean) => void
   openAbout: () => void
@@ -178,8 +202,16 @@ function clampIndex(i: number, n: number): number {
 }
 
 /** hash 경로(Route) → 상태 조각. 초기 상태와 hashchange 양쪽에서 사용 */
-function stateForRoute(route: Route, prev: Pick<AppState, 'buildingId' | 'floorId' | 'tour'>): Partial<AppState> {
-  const base = { screen: 'map' as Screen, tour: { ...prev.tour, active: false, autoplay: false } }
+const NO_EVENT: EventState = { active: false, spotNo: null }
+
+function stateForRoute(route: Route, prev: Pick<AppState, 'buildingId' | 'floorId' | 'tour' | 'event'>): Partial<AppState> {
+  const base = { screen: 'map' as Screen, tour: { ...prev.tour, active: false, autoplay: false }, event: NO_EVENT }
+  /** 안내 모드에서 평면도로 갔다가 브라우저 뒤로/앞으로 가기로 평면도 주소에 돌아와도 "← 설명회 안내" 가 이어지게 한다 */
+  const eventInFloor = (roomId?: string): EventState => {
+    if (!prev.event.active) return NO_EVENT
+    const spot = roomId ? getSpots().byRoom.get(roomId) : undefined
+    return spot ? { active: true, spotNo: spotNoOf(spot) } : prev.event
+  }
   switch (route.kind) {
     case 'campus':
       return { ...base, view: 'campus', buildingId: null, floorId: null, roomId: null, floorDir: 0, panel: { open: false, snap: 'half' } }
@@ -188,6 +220,7 @@ function stateForRoute(route: Route, prev: Pick<AppState, 'buildingId' | 'floorI
     case 'floor':
       return {
         ...base,
+        event: eventInFloor(),
         view: 'floor',
         buildingId: route.building,
         floorId: route.floor,
@@ -198,6 +231,7 @@ function stateForRoute(route: Route, prev: Pick<AppState, 'buildingId' | 'floorI
     case 'room':
       return {
         ...base,
+        event: eventInFloor(route.room),
         view: 'floor',
         buildingId: route.building,
         floorId: route.floor,
@@ -206,9 +240,21 @@ function stateForRoute(route: Route, prev: Pick<AppState, 'buildingId' | 'floorI
         panel: { open: true, snap: 'half' },
       }
     case 'tour':
-      return { screen: 'map', tour: { active: true, index: route.index, autoplay: false }, panel: { open: true, snap: tourOpenSnap() } }
+      return { screen: 'map', tour: { active: true, index: route.index, autoplay: false }, event: NO_EVENT, panel: { open: true, snap: tourOpenSnap() } }
+    case 'event':
+      return {
+        screen: 'map',
+        view: 'campus',
+        buildingId: null,
+        floorId: null,
+        roomId: null,
+        floorDir: 0,
+        tour: { ...prev.tour, active: false, autoplay: false },
+        event: { active: true, spotNo: route.spot },
+        panel: { open: true, snap: 'half' },
+      }
     case 'calibrate':
-      return { screen: 'calibrate', tour: { ...prev.tour, active: false, autoplay: false } }
+      return { screen: 'calibrate', tour: { ...prev.tour, active: false, autoplay: false }, event: NO_EVENT }
   }
 }
 
@@ -223,12 +269,16 @@ const baseState = {
   floorDir: 0 as -1 | 0 | 1,
   panel: { open: false, snap: 'half' as PanelSnap },
   tour: { active: false, index: 0, autoplay: false },
+  event: NO_EVENT,
 }
 
 export const useAppStore = create<AppState>()((set, get) => {
   /** 투어 종료(자유 탐색). 위치·선택은 유지 */
   const leaveTour = (): Partial<AppState> =>
     get().tour.active ? { tour: { ...get().tour, active: false, autoplay: false } } : {}
+
+  /** 입학설명회 안내 모드 종료 */
+  const leaveEvent = (): Partial<AppState> => (get().event.active ? { event: NO_EVENT } : {})
 
   /** 현재 투어 지점으로 지도 이동 (콘텐츠 로드 전이면 로드 완료 후 재적용됨) */
   const applyStop = (index: number) => {
@@ -256,6 +306,7 @@ export const useAppStore = create<AppState>()((set, get) => {
     goCampus: () =>
       set({
         ...leaveTour(),
+        ...leaveEvent(),
         screen: 'map',
         view: 'campus',
         buildingId: null,
@@ -269,6 +320,7 @@ export const useAppStore = create<AppState>()((set, get) => {
       if (!id || !getBuilding(id)) return get().goCampus()
       set({
         ...leaveTour(),
+        ...leaveEvent(),
         screen: 'map',
         view: 'campus',
         buildingId: id,
@@ -302,7 +354,9 @@ export const useAppStore = create<AppState>()((set, get) => {
       const keepTour = s.tour.active && stops[clampIndex(s.tour.index, stops.length)]?.facility === roomId
       const patch = patchForRoom(s, roomId, keepTour ? s.panel.snap : 'half')
       if (!patch) return
-      set({ ...(keepTour ? {} : leaveTour()), ...patch })
+      // 안내 모드에서 안내 장소의 방을 고르면(검색 등) "← 설명회 안내" 가 그 장소로 돌아가도록 번호를 맞춘다
+      const spot = s.event.active ? getSpots().byRoom.get(roomId) : undefined
+      set({ ...(keepTour ? {} : leaveTour()), ...patch, ...(spot ? { event: { active: true, spotNo: spotNoOf(spot) } } : {}) })
     },
 
     clearRoom: () => {
@@ -311,7 +365,8 @@ export const useAppStore = create<AppState>()((set, get) => {
       set({ roomId: null, panel: { open: s.panel.open, snap: 'peek' } })
     },
 
-    exitFloor: () =>
+    exitFloor: () => {
+      if (get().event.active) return get().openEvent(get().event.spotNo)
       set({
         ...leaveTour(),
         view: 'campus',
@@ -319,7 +374,8 @@ export const useAppStore = create<AppState>()((set, get) => {
         roomId: null,
         floorDir: 0,
         panel: { open: !!get().buildingId, snap: 'half' },
-      }),
+      })
+    },
 
     stepFloor: (dir) => {
       const s = get()
@@ -335,6 +391,11 @@ export const useAppStore = create<AppState>()((set, get) => {
     closePanel: () => {
       const s = get()
       if (s.tour.active) return set({ panel: { open: s.panel.open, snap: 'peek' } })
+      if (s.event.active && s.view === 'campus') {
+        // 안내 장소 → 전체 안내 → (패널 닫기: 지도는 안내 모드 그대로)
+        if (s.event.spotNo !== null) return get().openEvent(null)
+        return set({ panel: { open: false, snap: s.panel.snap } })
+      }
       if (s.roomId) return get().clearRoom()
       if (s.view === 'campus' && s.buildingId) return get().goCampus()
       set({ panel: { open: false, snap: s.panel.snap } })
@@ -347,6 +408,7 @@ export const useAppStore = create<AppState>()((set, get) => {
       set({
         screen: 'map',
         tour: { active: true, index: clampIndex(index, n), autoplay: false },
+        event: NO_EVENT,
         panel: { open: true, snap: tourOpenSnap() },
         search: { open: false },
         ui: { ...get().ui, intro: false, aboutOpen: false },
@@ -368,6 +430,50 @@ export const useAppStore = create<AppState>()((set, get) => {
     endTour: () => set({ tour: { ...get().tour, active: false, autoplay: false } }),
     setAutoplay: (on) => set({ tour: { ...get().tour, autoplay: on } }),
 
+    openEvent: (spotNo = null) => {
+      const s = get()
+      // 이미 안내 모드로 지도를 보고 있으면 사용자가 맞춰 둔 시트 높이를 유지한다
+      const keep = s.event.active && s.view === 'campus' && s.panel.open
+      set({
+        ...leaveTour(),
+        screen: 'map',
+        view: 'campus',
+        buildingId: null,
+        floorId: null,
+        roomId: null,
+        floorDir: 0,
+        event: { active: true, spotNo },
+        panel: { open: true, snap: keep ? s.panel.snap : 'half' },
+        search: { open: false },
+        ui: { ...s.ui, intro: false, aboutOpen: false },
+      })
+      markIntroSeen()
+    },
+
+    eventStep: (dir) => {
+      const s = get()
+      if (!s.event.active) return
+      const spots = getSpots()
+      if (s.event.spotNo === null) {
+        const first = dir === 1 ? spots.list[0] : null
+        if (first) get().openEvent(spotNoOf(first))
+        return
+      }
+      const nx = stepSpot(spots, s.event.spotNo, dir)
+      if (nx) get().openEvent(spotNoOf(nx))
+    },
+
+    eventShowFloor: (spotNo) => {
+      const spot = spotByNo(getSpots(), spotNo)
+      if (!spot) return
+      const s = get()
+      const patch = patchForRoom(s, spot.roomId, 'half')
+      if (!patch) return
+      set({ ...leaveTour(), ...patch, event: { active: true, spotNo } })
+    },
+
+    closeEvent: () => get().goCampus(),
+
     setGps: (patch) => set({ gps: { ...get().gps, ...patch } }),
     resetGps: () => set({ gps: { status: 'idle', fix: null, error: null, consented: get().gps.consented } }),
 
@@ -378,12 +484,13 @@ export const useAppStore = create<AppState>()((set, get) => {
       markIntroSeen()
       set({ ui: { ...get().ui, intro: false } })
       if (next === 'tour') get().startTour(0)
+      else if (next === 'event') get().openEvent(null)
     },
     setShowPlanLayer: (on) => set({ ui: { ...get().ui, showPlanLayer: on } }),
     setLegend: (on) => set({ ui: { ...get().ui, legend: on } }),
     openAbout: () => set({ ui: { ...get().ui, aboutOpen: true }, search: { open: false } }),
     closeAbout: () => set({ ui: { ...get().ui, aboutOpen: false } }),
-    openCalibrate: () => set({ screen: 'calibrate', ui: { ...get().ui, aboutOpen: false, intro: false }, tour: { ...get().tour, active: false, autoplay: false } }),
+    openCalibrate: () => set({ screen: 'calibrate', ui: { ...get().ui, aboutOpen: false, intro: false }, tour: { ...get().tour, active: false, autoplay: false }, event: NO_EVENT }),
     closeCalibrate: () => set({ screen: 'map' }),
 
     setInsets: (i) => {
@@ -394,10 +501,37 @@ export const useAppStore = create<AppState>()((set, get) => {
   }
 })
 
+/**
+ * 주소가 #/event/<없는 번호> 일 때 주소를 #/event 로 '교체'한다(push 하면 뒤로 가기가 같은 주소로 되돌아오는 고리가 생긴다).
+ * 상태가 전체 안내(spotNo = null)로 바뀌기 직전에 부른다.
+ */
+function replaceStaleEventHash(): void {
+  try {
+    if (typeof location !== 'undefined' && /^#\/event\/[^/]*$/.test(location.hash)) history.replaceState(null, '', '#/event')
+  } catch {
+    /* 주소 교체 불가 — 무시 */
+  }
+}
+
+/** 콘텐츠가 로드된 뒤에도 없는 안내 장소 번호(#/event/99)를 가리키고 있으면 전체 안내로 되돌린다 */
+export function dropUnknownEventSpot(): void {
+  const st = useAppStore.getState()
+  if (!st.event.active || st.event.spotNo === null) return
+  if (useContent.getState().status !== 'ready') return
+  if (spotByNo(getSpots(), st.event.spotNo)) return
+  replaceStaleEventHash()
+  useAppStore.setState({ event: { active: true, spotNo: null } })
+}
+
 // 콘텐츠(tour.json) 가 늦게 로드되면 투어 지점 이동을 재적용
 useContent.subscribe((s, prev) => {
   if (s.tour !== prev.tour) {
     const st = useAppStore.getState()
+    // 안내 모드: 없는 장소 번호(#/event/99 등)는 콘텐츠가 로드된 뒤 전체 안내로 되돌린다 (뒤로 가기 고리가 생기지 않게 주소는 교체)
+    if (st.event.active && st.event.spotNo !== null && !spotByNo(spotsFor(s.tour), st.event.spotNo)) {
+      replaceStaleEventHash()
+      useAppStore.setState({ event: { active: true, spotNo: null } })
+    }
     if (st.tour.active) {
       const stop = s.tour.stops[clampIndex(st.tour.index, s.tour.stops.length)]
       const patch = stop ? patchForRoom(st, stop.facility, tourSnap(st)) : null
@@ -408,9 +542,10 @@ useContent.subscribe((s, prev) => {
 
 // ───────────── hash 동기화 ─────────────
 
-export function routeFromState(s: Pick<AppState, 'screen' | 'tour' | 'view' | 'buildingId' | 'floorId' | 'roomId'>): Route {
+export function routeFromState(s: Pick<AppState, 'screen' | 'tour' | 'event' | 'view' | 'buildingId' | 'floorId' | 'roomId'>): Route {
   if (s.screen === 'calibrate') return { kind: 'calibrate' }
   if (s.tour.active) return { kind: 'tour', index: s.tour.index }
+  if (s.event.active && s.view === 'campus') return { kind: 'event', spot: s.event.spotNo }
   if (s.buildingId && s.floorId && s.view === 'floor') {
     if (s.roomId) return { kind: 'room', building: s.buildingId, floor: s.floorId, room: s.roomId }
     return { kind: 'floor', building: s.buildingId, floor: s.floorId }
@@ -422,6 +557,7 @@ export function routeFromState(s: Pick<AppState, 'screen' | 'tour' | 'view' | 'b
 function levelKey(s: AppState): string {
   if (s.screen === 'calibrate') return 'calibrate'
   if (s.tour.active) return 'tour'
+  if (s.event.active && s.view === 'campus') return `event|${s.event.spotNo === null ? 'o' : 'd'}`
   return `${s.view}|${s.buildingId ?? ''}|${s.floorId ?? ''}`
 }
 
@@ -456,6 +592,7 @@ export function initHashSync(): () => void {
     const route = parseHash(location.hash)
     const s = useAppStore.getState()
     useAppStore.setState(stateForRoute(route, s))
+    dropUnknownEventSpot() // #/event/99 처럼 없는 번호면 전체 안내로 (아래 write(true) 가 주소를 교체)
     // 투어 hash 로 들어왔고 콘텐츠가 이미 로드된 경우 지점 이동 적용
     if (route.kind === 'tour') {
       const stops = useContent.getState().tour.stops

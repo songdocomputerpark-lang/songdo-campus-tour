@@ -14,6 +14,7 @@
  *  - 마지막 지점: "투어 마치기"(→ 자유 탐색) + 처음부터 다시. 이동 경로·거리·소요 시간은 표시하지 않는다.
  *  - 접근성: 단계 안내는 role="status" aria-live, 점은 aria-current="step", 자동 진행은 role="switch".
  *    투어 중 ←/→ 키로 이전/다음(포커스가 본문·투어 컨트롤일 때만 — 지도 키보드 이동과 충돌하지 않게).
+ *  - 학생 안내 장소: 번호는 지도 ★ 번호(출발 지점 = "출발"), 제목은 안내 이름(label). 시설명이 다르면 부제에 함께 적는다.
  */
 import { Check, ChevronDown, ChevronLeft, ChevronRight, ListOrdered, Pause, Play, RotateCcw, X } from 'lucide-react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -22,6 +23,7 @@ import { prefersReducedMotion } from '../../lib/env'
 import { useAppStore } from '../../store/useAppStore'
 import { PanelHeader } from '../../ui/PanelHeader'
 import { PhotoSlot } from '../detail/PhotoSlot'
+import { SpotMark } from './SpotChip'
 import { autoplayElapsedMs, TOUR_PHOTO_MS, TOUR_STEP_MS, useTour, type ResolvedStop, type TourApi } from './useTour'
 
 export interface TourBarProps {
@@ -93,11 +95,11 @@ export function TourBar({ layout, onPeekHeight }: TourBarProps) {
 
   if (t.total === 0 || !cur) {
     return (
-      <section aria-label="추천 투어" data-layout={layout}>
-        <PanelHeader eyebrow="Recommended Tour" title={t.title || '추천 투어'} onClose={t.end} closeLabel="투어 종료" />
+      <section aria-label="안내 코스" data-layout={layout}>
+        <PanelHeader eyebrow="Campus Course" title={t.title || '안내 코스'} onClose={t.end} closeLabel="투어 종료" />
         <div className="px-5 pb-6">
           <p className="text-[0.9375rem] leading-relaxed text-ink-soft">
-            {t.total === 0 ? (contentStatus === 'ready' ? '추천 투어 안내를 준비하고 있습니다.' : '투어 정보를 불러오는 중입니다…') : '이 지점의 정보를 찾을 수 없습니다.'}
+            {t.total === 0 ? (contentStatus === 'ready' ? '안내 코스를 준비하고 있습니다.' : '투어 정보를 불러오는 중입니다…') : '이 지점의 정보를 찾을 수 없습니다.'}
           </p>
           <div className="mt-4 flex gap-2">
             {t.total > 0 && (
@@ -136,6 +138,22 @@ export function TourBar({ layout, onPeekHeight }: TourBarProps) {
 
   const info = (
     <div className={isSheet ? '' : 'mt-4'}>
+      {(cur.no !== null || cur.start) && (
+        <div className={`mb-3 flex items-center gap-2.5 rounded-card px-3 py-2.5 ${cur.start ? 'bg-navy/[0.06]' : 'bg-star-soft/70'}`}>
+          <SpotMark spot={cur} size={28} />
+          <p className="min-w-0 text-[0.875rem] leading-snug text-ink">
+            {cur.start ? (
+              <>
+                <b className="font-bold">출발 지점</b> · 여기에서 코스를 시작합니다
+              </>
+            ) : (
+              <>
+                <b className="font-bold">학생 안내 장소 {cur.no}</b> · 재학생이 이곳에서 직접 안내합니다
+              </>
+            )}
+          </p>
+        </div>
+      )}
       <div className="flex flex-wrap gap-1.5">
         <span className="chip">{cur.categoryLabel}</span>
         {cur.conf === 'medium' && <span className="chip border-gold/50 bg-gold-soft/60 text-gold-deep">명칭 대응 검토 중</span>}
@@ -154,7 +172,7 @@ export function TourBar({ layout, onPeekHeight }: TourBarProps) {
   )
 
   return (
-    <section aria-label="추천 투어" data-layout={layout}>
+    <section aria-label="안내 코스" data-layout={layout}>
       <div className="sr-only-live" role="status" aria-live="polite" aria-atomic="true">
         {live}
       </div>

@@ -65,7 +65,7 @@ describe('라벨 레이아웃', () => {
   it('splitLines: 단어 경계 우선, 균등 분할', () => {
     expect(splitLines('1학년 교무실', 2)).toEqual(['1학년', '교무실'])
     expect(splitLines('물리학강의실', 2)).toEqual(['물리학', '강의실'])
-    expect(splitLines('홈베이스(숲터)', 2)).toEqual(['홈베이스', '(숲터)'])
+    expect(splitLines('홈베이스(숨터)', 2)).toEqual(['홈베이스', '(숨터)'])
     expect(splitLines('도서관', 1)).toEqual(['도서관'])
   })
   it('모든 시설에 유한한 라벨 레이아웃이 있다', () => {

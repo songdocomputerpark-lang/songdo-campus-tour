@@ -234,7 +234,7 @@ export function useAutoCenter(a: FixAssessment | null): void {
     if (!a || autoCentered || a.quality !== 'good') return
     autoCentered = true
     const st = useAppStore.getState()
-    if (st.view === 'campus' && !st.buildingId && !st.tour.active && st.screen === 'map') {
+    if (st.view === 'campus' && !st.buildingId && !st.tour.active && !st.event.active && st.screen === 'map') {
       focusSitePoint(a.px, { k: Math.max(getMapApi('campus')?.getTransform().k ?? 0, FOCUS_K) })
     }
   }, [a])

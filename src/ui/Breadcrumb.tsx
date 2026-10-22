@@ -1,5 +1,5 @@
 // 브레드크럼: 캠퍼스 › 본관동 › 2층  (각 단계 클릭으로 상위로 이동)
-import { ChevronRight } from 'lucide-react'
+import { ArrowLeft, ChevronRight } from 'lucide-react'
 import { floorLabel, getBuilding, getFloor } from '../data'
 import { useAppStore } from '../store/useAppStore'
 
@@ -8,6 +8,9 @@ export function Breadcrumb({ className = '' }: { className?: string }) {
   const buildingId = useAppStore((s) => s.buildingId)
   const floorId = useAppStore((s) => s.floorId)
   const tourActive = useAppStore((s) => s.tour.active)
+  const eventActive = useAppStore((s) => s.event.active)
+  const eventSpotNo = useAppStore((s) => s.event.spotNo)
+  const openEvent = useAppStore((s) => s.openEvent)
   const goCampus = useAppStore((s) => s.goCampus)
   const selectBuilding = useAppStore((s) => s.selectBuilding)
 
@@ -25,6 +28,23 @@ export function Breadcrumb({ className = '' }: { className?: string }) {
       <ol className="flex min-w-0 items-center gap-0.5 text-[0.8125rem] font-medium">
         {tourActive && (
           <li className="mr-1.5 shrink-0 rounded-full bg-navy px-2 py-0.5 text-[0.6875rem] font-semibold tracking-wide text-white">추천 투어</li>
+        )}
+        {eventActive && !tourActive && view === 'campus' && (
+          <li className="mr-1.5 shrink-0 rounded-full bg-navy px-2 py-0.5 text-[0.6875rem] font-semibold tracking-wide text-white">입학설명회 안내</li>
+        )}
+        {/* 안내에서 평면도로 들어온 경우: 안내(#/event/<n>)로 돌아가는 버튼 */}
+        {eventActive && !tourActive && view === 'floor' && (
+          <li className="mr-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => openEvent(eventSpotNo)}
+              aria-label="입학설명회 안내로 돌아가기"
+              className="inline-flex min-h-[2.25rem] items-center gap-1 rounded-full bg-navy py-0.5 pl-2 pr-3 text-[0.75rem] font-bold text-white shadow-soft transition-colors hover:bg-navy-700"
+            >
+              <ArrowLeft size={14} strokeWidth={2.4} aria-hidden="true" />
+              설명회 안내
+            </button>
+          </li>
         )}
         {items.map((it, i) => {
           const last = i === items.length - 1

@@ -12,6 +12,7 @@ export default {
         paper: { DEFAULT: c('paper'), 2: c('paper-2'), 3: c('paper-3') },
         line: { DEFAULT: c('line'), strong: c('line-strong') },
         gold: { DEFAULT: c('gold'), deep: c('gold-deep'), soft: c('gold-soft') },
+        star: { DEFAULT: c('star'), deep: c('star-deep'), soft: c('star-soft') },
         leaf: { DEFAULT: c('leaf'), soft: c('leaf-soft') },
         surface: c('surface'),
         danger: c('danger'),

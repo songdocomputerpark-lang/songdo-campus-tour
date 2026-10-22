@@ -22,6 +22,8 @@ import { getMapApi } from '../../map/mapBus'
 import { useAppStore } from '../../store/useAppStore'
 import { PanelHeader } from '../../ui/PanelHeader'
 import { useIsDesktop } from '../../ui/useMedia'
+import { SpotMark } from '../tour/SpotChip'
+import { useSpots, type Spot } from '../tour/spots'
 import { BuildingDetail } from './BuildingDetail'
 import { PhotoSlot } from './PhotoSlot'
 
@@ -50,6 +52,8 @@ function RoomDetail({ room, floor, building }: { room: Room; floor: Floor; build
   const facility = useContent((s) => s.facilities[room.id])
   const allPhotos = useContent((s) => s.photos)
   const pics = photosFor(allPhotos, room.id)
+  const spots = useSpots()
+  const spot = spots.byRoom.get(room.id)
   const articleRef = useRef<HTMLElement>(null)
 
   // 다른 시설로 바뀌면 패널(스크롤 컨테이너) 맨 위로
@@ -137,6 +141,8 @@ function RoomDetail({ room, floor, building }: { room: Room; floor: Floor; build
           )}
         </div>
 
+        {spot && <SpotCallout spot={spot} />}
+
         <div className="mt-4">
           <PhotoSlot photos={pics} alt={`${building.name} ${floorLabel(floor.floor)} ${room.name}`} buildingId={building.id} roomId={room.id} />
         </div>
@@ -219,18 +225,28 @@ function RoomDetail({ room, floor, building }: { room: Room; floor: Floor; build
               }
             />
             <ul className="grid grid-cols-2 gap-1.5">
-              {others.map((r) => (
-                <li key={r.id}>
-                  <button
-                    type="button"
-                    onClick={() => selectRoom(r.id)}
-                    className="group flex min-h-[2.75rem] w-full items-center gap-2 rounded-xl border border-line bg-surface/60 px-3 py-1.5 text-left text-[0.875rem] leading-snug text-ink transition-[border-color,background-color,box-shadow] duration-180 hover:border-navy/40 hover:bg-surface hover:shadow-soft"
-                  >
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-[3px] border border-ink/15" style={{ background: tint(building.color, CAT_KEEP[r.cat]) }} aria-hidden="true" />
-                    <span className="min-w-0 break-keep [overflow-wrap:anywhere] line-clamp-2">{r.name}</span>
-                  </button>
-                </li>
-              ))}
+              {others.map((r) => {
+                const sp = spots.byRoom.get(r.id)
+                return (
+                  <li key={r.id}>
+                    <button
+                      type="button"
+                      onClick={() => selectRoom(r.id)}
+                      className="group flex min-h-[2.75rem] w-full items-center gap-2 rounded-xl border border-line bg-surface/60 px-3 py-1.5 text-left text-[0.875rem] leading-snug text-ink transition-[border-color,background-color,box-shadow] duration-180 hover:border-navy/40 hover:bg-surface hover:shadow-soft"
+                    >
+                      {sp ? (
+                        <SpotMark spot={sp} size={18} className="-ml-0.5" />
+                      ) : (
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-[3px] border border-ink/15" style={{ background: tint(building.color, CAT_KEEP[r.cat]) }} aria-hidden="true" />
+                      )}
+                      <span className="min-w-0 break-keep [overflow-wrap:anywhere] line-clamp-2">
+                        {r.name}
+                        {sp && <span className="sr-only">, {sp.no === null ? '출발 지점' : `학생 안내 장소 ${sp.no}번`}</span>}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           </section>
         )}
@@ -242,6 +258,25 @@ function RoomDetail({ room, floor, building }: { room: Room; floor: Floor; build
 }
 
 // ───────────────────────────── 조각 컴포넌트 ─────────────────────────────
+
+/** 학생 안내 장소 안내 상자: "★3 중앙현관 · 재학생이 이곳에서 직접 안내합니다" + 코스에서 보기 */
+function SpotCallout({ spot }: { spot: Spot }) {
+  const startTour = useAppStore((s) => s.startTour)
+  const start = spot.no === null
+  return (
+    <div className={`mt-4 flex items-center gap-3 rounded-card border p-3 ${start ? 'border-navy/25 bg-navy/[0.05]' : 'border-star-deep/35 bg-star-soft/60'}`}>
+      <SpotMark spot={spot} size={34} />
+      <div className="min-w-0 flex-1">
+        <p className={`eyebrow text-[0.6875rem] ${start ? 'text-navy-500' : 'text-gold-deep'}`}>{start ? 'Starting Point · 출발' : `Student Guide · ★${spot.no}`}</p>
+        <p className="truncate text-[0.9375rem] font-bold leading-snug text-ink">{spot.label}</p>
+        <p className="text-[0.8125rem] leading-snug text-ink-soft">{start ? '안내 코스가 여기에서 출발합니다.' : '재학생이 이곳에서 직접 안내합니다.'}</p>
+      </div>
+      <button type="button" onClick={() => startTour(spot.index)} className="btn btn-ghost !min-h-[2.5rem] shrink-0 !px-3.5 text-[0.8125rem]">
+        코스에서 보기
+      </button>
+    </div>
+  )
+}
 
 function StepButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
   return (

@@ -145,9 +145,24 @@ export interface TourStop {
   /** roomId */
   facility: string
   note: string
+  /** 안내판·지도 별표에 쓸 이름 (예: 학생식당 → "급식실"). 없으면 시설명 */
+  label?: string
+  /** 출발 지점 — 별표 번호 없이 "출발"로 표시 */
+  start?: boolean
+  /** 찾아가는 방법 — 짧은 단계 문장 목록(입학설명회 안내 화면의 "찾아가는 방법"). 없으면 생략 */
+  howto?: string[]
+}
+/** 입학설명회 안내 화면 머리말 (tour.json 의 event) */
+export interface TourEvent {
+  title: string
+  /** 예: "2026. 10. 31.(토)" — 비어 있으면 날짜 배지를 숨긴다 */
+  date: string
+  subtitle: string
 }
 export interface Tour {
   title: string
+  /** 없으면(구버전 tour.json) 화면은 기본 문구를 쓴다 */
+  event?: TourEvent
   stops: TourStop[]
 }
 

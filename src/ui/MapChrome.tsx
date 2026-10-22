@@ -9,6 +9,7 @@ import { useRegisteredMap } from '../map/mapBus'
 import { MapControls } from '../map/MapControls'
 import { ScaleBar } from '../map/ScaleBar'
 import { useAppStore } from '../store/useAppStore'
+import { useIsNarrow } from './useMedia'
 
 interface Props {
   isDesktop: boolean
@@ -50,6 +51,8 @@ export function MapChrome({ isDesktop, rightShift, bottomLift, compactControls }
   const openPanel = useAppStore((s) => s.openPanel)
   const panelOpen = useAppStore((s) => s.panel.open)
   const hasRoom = useAppStore((s) => !!s.roomId)
+  const eventActive = useAppStore((s) => s.event.active)
+  const narrow = useIsNarrow()
   const clearRoom = useAppStore((s) => s.clearRoom)
   const campusApi = useRegisteredMap('campus')
   const floorApi = useRegisteredMap('floor')
@@ -120,8 +123,8 @@ export function MapChrome({ isDesktop, rightShift, bottomLift, compactControls }
         </div>
       )}
 
-      {/* 축척 (캠퍼스 화면) */}
-      {view === 'campus' && (
+      {/* 축척 (캠퍼스 화면). 폰의 안내 모드(#/event)에서는 카드·핀과 겹치므로 숨긴다 */}
+      {view === 'campus' && !(eventActive && narrow) && (
         <div
           className="absolute z-10"
           style={isDesktop ? { left: '1.5rem', bottom: '1.75rem' } : { left: '1rem', bottom: bottomLift + 14, transition: 'bottom 380ms var(--ease-out)' }}

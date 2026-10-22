@@ -103,6 +103,7 @@ export function AboutModal() {
                 '‘개략도’ 표시가 있는 층은 정밀 도면이 아니라 개략적인 배치입니다.',
                 '사진이 아직 없는 시설은 ‘사진 준비 중’으로, 소개가 비어 있으면 준비 중 안내로 표시합니다.',
                 '추천 투어는 관람 순서만 제안하며 이동 경로나 거리는 안내하지 않습니다.',
+                '입학설명회 안내에서 내 위치와 장소를 잇는 점선은 직선 방향·거리일 뿐 실제 걷는 길이 아닙니다.',
               ]}
             />
           </Section>
@@ -163,7 +164,7 @@ export function AboutModal() {
                 <b className="font-semibold text-ink">시설 소개</b> — <code className={code}>public/content/facilities.json</code> 의 시설 ID별 이름·소개·특징·교육활동을 고칩니다.
               </li>
               <li>
-                <b className="font-semibold text-ink">추천 투어</b> — <code className={code}>public/content/tour.json</code> 의 <code className={code}>stops</code> 순서를 바꿉니다.
+                <b className="font-semibold text-ink">입학설명회 안내·추천 투어</b> — <code className={code}>public/content/tour.json</code> 의 <code className={code}>stops</code> 순서(★ 번호), <code className={code}>label</code>·<code className={code}>note</code>·<code className={code}>howto</code>(찾아가는 방법), <code className={code}>event</code>(날짜·제목)를 고칩니다.
               </li>
               <li>
                 <b className="font-semibold text-ink">사진</b> — <code className={code}>public/photos/&lt;시설ID&gt;/</code> 폴더에 이미지를 넣고(건물 사진은{' '}

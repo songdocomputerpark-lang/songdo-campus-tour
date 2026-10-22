@@ -1,6 +1,6 @@
-// 하단 툴바: [전체 지도] [추천 투어] [내 위치] [정보]
+// 하단 툴바: [전체 지도] [설명회 안내] [내 위치] [정보]  (투어 진행 중에는 "투어 종료")
 //  데스크톱: 하단 중앙 떠 있는 알약 / 모바일: 하단 고정 바(안전영역 고려, 터치 타깃 ≥ 44px)
-import { Info, Map as MapIcon, Route } from 'lucide-react'
+import { Info, Map as MapIcon, Star } from 'lucide-react'
 import { GpsControls } from '../features/gps/GpsControls'
 import { useAppStore } from '../store/useAppStore'
 import { ToolbarButton } from './ToolbarButton'
@@ -9,13 +9,14 @@ export function Toolbar() {
   const view = useAppStore((s) => s.view)
   const buildingId = useAppStore((s) => s.buildingId)
   const tourActive = useAppStore((s) => s.tour.active)
+  const eventActive = useAppStore((s) => s.event.active)
   const aboutOpen = useAppStore((s) => s.ui.aboutOpen)
   const goCampus = useAppStore((s) => s.goCampus)
-  const startTour = useAppStore((s) => s.startTour)
+  const openEvent = useAppStore((s) => s.openEvent)
   const endTour = useAppStore((s) => s.endTour)
   const openAbout = useAppStore((s) => s.openAbout)
 
-  const atCampus = view === 'campus' && !buildingId && !tourActive
+  const atCampus = view === 'campus' && !buildingId && !tourActive && !eventActive
 
   return (
     <nav
@@ -30,11 +31,11 @@ export function Toolbar() {
     >
       <ToolbarButton icon={<MapIcon size={21} strokeWidth={1.7} />} label="전체 지도" active={atCampus} onClick={goCampus} />
       <ToolbarButton
-        icon={<Route size={21} strokeWidth={1.7} />}
-        label={tourActive ? '투어 종료' : '추천 투어'}
-        active={tourActive}
-        pressed={tourActive}
-        onClick={() => (tourActive ? endTour() : startTour(0))}
+        icon={<Star size={21} strokeWidth={1.7} className={eventActive && !tourActive ? 'fill-star/90' : ''} />}
+        label={tourActive ? '투어 종료' : '설명회 안내'}
+        active={tourActive || (eventActive && view === 'campus')}
+        pressed={tourActive || (eventActive && view === 'campus')}
+        onClick={() => (tourActive ? endTour() : openEvent(null))}
       />
       <GpsControls variant="toolbar" />
       <ToolbarButton icon={<Info size={21} strokeWidth={1.7} />} label="정보" active={aboutOpen} onClick={openAbout} />

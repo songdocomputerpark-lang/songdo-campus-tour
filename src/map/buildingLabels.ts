@@ -39,7 +39,7 @@ export function buildingHeight(b: Building): number {
 }
 
 /** 축에 평행한 직선(axis='y': 수직선 x=c, 'x': 수평선 y=c)이 다각형과 만나는 [최소, 최대] */
-function lineSpan(poly: readonly Pt[], axis: 'x' | 'y', c: number): [number, number] | null {
+export function lineSpan(poly: readonly Pt[], axis: 'x' | 'y', c: number): [number, number] | null {
   let lo = Infinity
   let hi = -Infinity
   const a = axis === 'y' ? 0 : 1 // 고정 좌표 인덱스
@@ -82,11 +82,20 @@ export function labelMetrics(b: Building, compact: boolean): LabelMetrics {
   return { w: 30 + textW + 12, h: 38, gap: 8, compact }
 }
 
-interface Rect {
+export interface Rect {
   x0: number
   y0: number
   x1: number
   y1: number
+}
+
+/**
+ * 이름표보다 먼저 자리를 차지하는 요소(학생 안내 장소 핀 — spotPins.ts). 이름표는 이 사각형들을 피해 놓인다.
+ * rects 는 (양자화된 배율, narrow, ui-scale) 에 대해 '월드×k' 사각형을 돌려준다. key 가 같으면 결과도 같아야 한다(캐시 키).
+ */
+export interface LabelObstacles {
+  key: string
+  rects: (k: number, narrow: boolean, us: number) => Rect[]
 }
 
 function overlaps(a: Rect, b: Rect, pad: number): boolean {
@@ -166,18 +175,18 @@ export function labelStep(k: number): number {
 const cache = new Map<string, LabelPlacement>()
 
 /**
- * 배율 k 에서의 이름표 배치. 결과는 (배율 5% 단계, narrow, uiScale) 별로 캐시되어 같은 단계에서는 같은 객체를 돌려준다.
- * narrow = 뷰포트 폭 < 640px → 항상 축약 이름표.
+ * 배율 k 에서의 이름표 배치. 결과는 (배율 5% 단계, narrow, uiScale, 장애물 key) 별로 캐시되어 같은 단계에서는 같은 객체를 돌려준다.
+ * narrow = 뷰포트 폭 < 640px → 항상 축약 이름표. obstacles = 이름표가 피해야 할 핀(항상 보임).
  */
-export function placeLabels(k: number, narrow: boolean, us = 1): LabelPlacement {
+export function placeLabels(k: number, narrow: boolean, us = 1, obstacles?: LabelObstacles): LabelPlacement {
   const step = labelStep(k)
-  const key = `${step}|${narrow ? 1 : 0}|${us}`
+  const key = `${step}|${narrow ? 1 : 0}|${us}|${obstacles?.key ?? ''}`
   const hit = cache.get(key)
   if (hit) return hit
 
   const kq = Math.exp(step * STEP)
   const compact = narrow || kq < COMPACT_K
-  const placed: Rect[] = []
+  const placed: Rect[] = obstacles ? obstacles.rects(kq, narrow, us) : []
   const items = {} as Record<BuildingId, PlacedLabel>
 
   for (const e of ENTRIES) {

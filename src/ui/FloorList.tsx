@@ -1,7 +1,10 @@
 // "목록으로 보기": 현재 층의 시설 리스트(카테고리별). 평면도를 보기 어려운 환경의 대안이자 접근성 경로.
+// 학생 안내 장소(★)는 번호 표식과 안내 이름을 함께 보여 준다.
 import { ChevronRight } from 'lucide-react'
 import { campus, floorLabel, getBuilding, getFloor } from '../data'
 import type { CategoryId, Room } from '../data/types'
+import { SpotMark } from '../features/tour/SpotChip'
+import { useSpots, type Spot } from '../features/tour/spots'
 import { tint } from '../lib/color'
 import { CAT_KEEP } from '../map/categoryTint'
 import { useAppStore } from '../store/useAppStore'
@@ -16,6 +19,7 @@ export function FloorList() {
   const selectRoom = useAppStore((s) => s.selectRoom)
   const closePanel = useAppStore((s) => s.closePanel)
   const exitFloor = useAppStore((s) => s.exitFloor)
+  const spots = useSpots()
   const building = getBuilding(buildingId)
   const floor = getFloor(buildingId, floorId)
   if (!building || !floor) return null
@@ -53,7 +57,7 @@ export function FloorList() {
             </h3>
             <ul>
               {g.rooms.map((r) => (
-                <RoomRow key={r.id} room={r} selected={r.id === roomId} onSelect={() => selectRoom(r.id)} />
+                <RoomRow key={r.id} room={r} selected={r.id === roomId} onSelect={() => selectRoom(r.id)} spot={spots.byRoom.get(r.id)} />
               ))}
             </ul>
           </div>
@@ -63,7 +67,7 @@ export function FloorList() {
   )
 }
 
-function RoomRow({ room, selected, onSelect }: { room: Room; selected: boolean; onSelect: () => void }) {
+function RoomRow({ room, selected, onSelect, spot }: { room: Room; selected: boolean; onSelect: () => void; spot?: Spot }) {
   return (
     <li>
       <button
@@ -74,8 +78,13 @@ function RoomRow({ room, selected, onSelect }: { room: Room; selected: boolean; 
           selected ? 'bg-navy/[0.07] font-semibold text-navy' : 'text-ink hover:bg-paper-2'
         }`}
       >
+        {spot && <SpotMark spot={spot} size={22} />}
         <span className="min-w-0 flex-1">
-          <span className="block truncate">{room.name}</span>
+          <span className="block truncate">
+            {room.name}
+            {spot && <span className="sr-only">, {spot.no === null ? '출발 지점' : `학생 안내 장소 ${spot.no}번`}</span>}
+          </span>
+          {spot && spot.label !== room.name && <span className="block truncate text-[0.75rem] font-semibold text-gold-deep">안내 이름 · {spot.label}</span>}
           {room.sub && <span className="block truncate text-[0.75rem] font-normal text-ink-mute">{room.sub}</span>}
         </span>
         <ChevronRight size={16} className="shrink-0 text-ink-mute opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
