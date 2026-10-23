@@ -18,6 +18,8 @@ import { buildings, campus, site } from '../data'
 import type { Building, Bounds, Insets, MinorBuilding, Pt } from '../data/types'
 import { GpsLayer } from '../features/gps/GpsLayer'
 import { spotByNo } from '../features/event/eventModel'
+import { useEventUi } from '../features/event/eventUi'
+import { useVenueMode } from '../features/event/useEventTab'
 import { getSpots, useSpots } from '../features/tour/spots'
 import { shade, tint } from '../lib/color'
 import {
@@ -35,6 +37,7 @@ import { useAppStore } from '../store/useAppStore'
 import { buildingHeight, type PlacedLabel } from './buildingLabels'
 import { eventModelFor, focusBoundsFor } from './eventLayout'
 import { EventLayer } from './EventLayer'
+import { VenueLayer } from './VenueLayer'
 import { useMapScale } from './MapContext'
 import { registerMap } from './mapBus'
 import { MapViewport } from './MapViewport'
@@ -253,8 +256,8 @@ const BuildingShape = memo(function BuildingShape({
   dim: boolean
   interactive: boolean
   onSelect: (id: Building['id']) => void
-  /** 입학설명회 안내 모드: 'spot' = 안내 장소가 있는 건물(금빛 테두리) · 'muted' = 없는 건물(흐리게) */
-  ev?: 'spot' | 'muted'
+  /** 입학설명회 안내 모드: 'spot' = 안내 장소가 있는 건물(금빛 테두리) · 'venue' = 식순 탭의 설명회 장소 · 'muted' = 그 밖의 건물(흐리게) */
+  ev?: 'spot' | 'venue' | 'muted'
 }) {
   const { b } = g
   const gradId = `roof-${b.id}`
@@ -276,9 +279,11 @@ const BuildingShape = memo(function BuildingShape({
       tabIndex={interactive ? 0 : -1}
       aria-label={
         interactive
-          ? ev === 'spot'
-            ? `${b.name}, 학생 안내 장소가 있는 건물. 선택하면 안내를 봅니다`
-            : `${b.name} (${b.en}), ${b.floors.length}개 층. 선택하면 건물 안내와 층 목록을 봅니다`
+          ? ev === 'venue'
+            ? `${b.name}, 입학설명회 장소. 선택하면 지도를 확대합니다`
+            : ev === 'spot'
+              ? `${b.name}, 학생 안내 장소가 있는 건물. 선택하면 안내를 봅니다`
+              : `${b.name} (${b.en}), ${b.floors.length}개 층. 선택하면 건물 안내와 층 목록을 봅니다`
           : undefined
       }
       aria-pressed={interactive ? selected : undefined}
@@ -291,7 +296,7 @@ const BuildingShape = memo(function BuildingShape({
           <stop offset="1" stopColor={b.color} />
         </linearGradient>
       </defs>
-      {ev === 'spot' && (
+      {(ev === 'spot' || ev === 'venue') && (
         <g className="ev-ring-set" data-sel={selected} pointerEvents="none">
           <polygon className="ev-ring ev-ring-o" points={hullPoints} />
           <polygon className="ev-ring ev-ring-m" points={hullPoints} />
@@ -370,6 +375,11 @@ export function CampusMap({ active = true, insets, mode = 'explore', onSiteTap, 
   const evModel = useMemo(() => eventModelFor(spots), [spots])
   const evBuilding = eventActive ? (spotByNo(spots, evSpotNo)?.buildingId ?? null) : null
   const evBuildings = useMemo(() => new Set<string>(evModel.buildings.map((b) => b.id)), [evModel])
+  // 식순 탭: 모든 ★ 카드 대신 설명회 장소(체육관동)만 강조. '장소' 줄을 누르면(venueFocus) 그 건물로 확대
+  const venue = useVenueMode()
+  const venueBuilding = eventActive && venue ? venue.buildingId : null
+  const venueSet = useMemo(() => (venueBuilding ? new Set<string>([venueBuilding]) : null), [venueBuilding])
+  const venueFocus = useEventUi((s) => s.venueFocus)
   const [api, setApi] = useState<PanZoomApi | null>(null)
 
   const onApi = useCallback((a: PanZoomApi | null) => {
@@ -384,6 +394,13 @@ export function CampusMap({ active = true, insets, mode = 'explore', onSiteTap, 
   useEffect(() => {
     if (!api || view !== 'campus' || mode !== 'explore') return
     if (eventActive) {
+      if (venueBuilding) {
+        const vb = focusBounds(venueBuilding)
+        // 이름표가 지붕 위에 얹히므로 위쪽 여백을 넉넉히
+        if (venueFocus > 0 && vb) api.animateTo(vb, { padding: { top: 104, bottom: 36, left: 28, right: 28 }, maxScale: 1.4 })
+        else api.animateTo(PORTRAIT_FIT, { padding: 10, maxScale: 1.2 })
+        return
+      }
       const eb = evBuilding ? evModel.byId.get(evBuilding as Building['id']) : undefined
       if (!eb) {
         // 전체 안내: 건물 외접 영역 + 카드가 놓일 여백(데스크톱도 폰과 같은 영역 — 대지 전체보다 한 단계 크게 보인다)
@@ -407,12 +424,17 @@ export function CampusMap({ active = true, insets, mode = 'explore', onSiteTap, 
     if (fb) api.animateTo(fb, { padding: { top: 44, bottom: 36, left: 28, right: 28 }, maxScale: 3.2 })
     else api.fit()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [api, buildingId, view, mode, eventActive, evBuilding, evModel, eventActive ? insetsKey : ''])
+  }, [api, buildingId, view, mode, eventActive, evBuilding, evModel, venueBuilding, venueFocus, eventActive ? insetsKey : ''])
 
   const select = useCallback(
     (id: Building['id']) => {
       const st = useAppStore.getState()
       if (st.event.active) {
+        // 식순 탭: 강조된 설명회 장소 건물을 누르면 그 건물로 확대
+        if (venueBuilding) {
+          if (id === venueBuilding) useEventUi.getState().focusVenue()
+          return
+        }
         // 안내 모드: 건물을 누르면 그 건물의 안내 장소를 연다 (이미 그 건물의 장소를 보고 있으면 그대로)
         const list = getSpots().byBuilding.get(id) ?? []
         const cur = spotByNo(getSpots(), st.event.spotNo)
@@ -421,7 +443,7 @@ export function CampusMap({ active = true, insets, mode = 'explore', onSiteTap, 
       }
       selectBuilding(id)
     },
-    [selectBuilding],
+    [selectBuilding, venueBuilding],
   )
 
   const onBackgroundTap = useCallback(
@@ -458,8 +480,9 @@ export function CampusMap({ active = true, insets, mode = 'explore', onSiteTap, 
           onSelect={select}
           showGps={showGps}
           extraLayers={extraLayers}
-          eventBuildings={eventActive ? evBuildings : undefined}
-          eventSelected={evBuilding}
+          eventBuildings={eventActive ? (venueSet ?? evBuildings) : undefined}
+          eventSelected={venueBuilding ?? evBuilding}
+          venueBuilding={venueBuilding}
         />
       </MapViewport>
     </div>
@@ -475,6 +498,7 @@ function CampusContent({
   extraLayers,
   eventBuildings,
   eventSelected,
+  venueBuilding,
 }: {
   buildingId: string | null
   interactive: boolean
@@ -484,6 +508,8 @@ function CampusContent({
   /** 입학설명회 안내 모드면 안내 장소가 있는 건물 id 집합 (그 밖의 건물·부속 건물은 흐리게) */
   eventBuildings?: ReadonlySet<string>
   eventSelected?: string | null
+  /** 식순 탭: 설명회 장소 건물 (이 건물만 강조하고 ★ 카드 대신 "설명회 장소" 이름표) */
+  venueBuilding?: Building['id'] | null
 }) {
   const k = useMapScale(3)
   const eventMode = !!eventBuildings
@@ -520,7 +546,7 @@ function CampusContent({
             dim={!!buildingId && buildingId !== g.b.id}
             interactive={interactive && (!eventMode || spotBuilding)}
             onSelect={onSelect}
-            ev={eventMode ? (spotBuilding ? 'spot' : 'muted') : undefined}
+            ev={eventMode ? (spotBuilding ? (venueBuilding ? 'venue' : 'spot') : 'muted') : undefined}
           />
         )
       })}
@@ -543,7 +569,7 @@ function CampusContent({
         ))}
 
       {/* 학생 안내 장소 핀 (이름표는 핀을 피해 놓인다 — spotPins.ts). 입학설명회 안내 모드에서는 말풍선 카드 레이어(eventLayout.ts) */}
-      {eventMode ? <EventLayer interactive={interactive} /> : <SpotPinLayer interactive={interactive} />}
+      {eventMode ? venueBuilding ? <VenueLayer buildingId={venueBuilding} /> : <EventLayer interactive={interactive} /> : <SpotPinLayer interactive={interactive} />}
 
       {/* GPS 슬롯 (계약: 파일 상단 주석) */}
       {showGps && <GpsLayer />}

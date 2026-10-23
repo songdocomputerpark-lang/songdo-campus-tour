@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useContent } from '../src/lib/content'
 import { dropUnknownEventSpot, routeFromState, useAppStore } from '../src/store/useAppStore'
 
@@ -335,6 +335,74 @@ describe('입학설명회 안내(event)', () => {
     S().goCampus()
     dropUnknownEventSpot() // 안내 모드가 아니면 아무 일도 하지 않는다
     expect(S().event.active).toBe(false)
+  })
+
+  it('탭: #/event 는 기본(null → 식순), setEventTab 은 #/event/program · #/event/spots 로 쓰인다', () => {
+    S().openEvent()
+    expect(S().eventTab).toBeNull()
+    expect(routeFromState(S())).toEqual({ kind: 'event', spot: null })
+    S().setEventTab('spots')
+    expect(S().event).toEqual({ active: true, spotNo: null })
+    expect(S().eventTab).toBe('spots')
+    expect(routeFromState(S())).toEqual({ kind: 'event', spot: null, tab: 'spots' })
+    S().setEventTab('program')
+    expect(routeFromState(S())).toEqual({ kind: 'event', spot: null, tab: 'program' })
+  })
+
+  it('탭: 장소 상세로 갔다가 전체 안내로 돌아오면 보던 탭 그대로 · 새로 들어오면 기본으로', () => {
+    S().openEvent(null, 'spots')
+    expect(S().eventTab).toBe('spots')
+    S().openEvent(2) // 장소 상세 — 탭은 그대로 두되 주소에는 쓰지 않는다
+    expect(S().eventTab).toBe('spots')
+    expect(routeFromState(S())).toEqual({ kind: 'event', spot: 2 })
+    S().openEvent(null)
+    expect(routeFromState(S())).toEqual({ kind: 'event', spot: null, tab: 'spots' })
+    S().goCampus()
+    S().openEvent() // 새로 들어오면 기본 탭
+    expect(S().eventTab).toBeNull()
+    expect(routeFromState(S())).toEqual({ kind: 'event', spot: null })
+  })
+
+  it('탭: 평면도를 다녀와도(안내 모드 유지) 탭이 유지된다', () => {
+    S().openEvent(null, 'program')
+    S().openEvent(2)
+    S().eventShowFloor(2)
+    S().exitFloor()
+    expect(S().event).toEqual({ active: true, spotNo: 2 })
+    S().openEvent(null)
+    expect(S().eventTab).toBe('program')
+  })
+
+  describe('주소 정리: 없는 장소 번호만 #/event 로 교체한다 (탭 주소는 건드리지 않는다)', () => {
+    const replaceState = vi.fn()
+    const useHash = (hash: string) => {
+      vi.stubGlobal('location', { hash })
+      vi.stubGlobal('history', { replaceState })
+    }
+    beforeEach(() => replaceState.mockClear())
+    afterEach(() => vi.unstubAllGlobals())
+
+    it('#/event/99 는 교체, #/event/program · #/event/spots 는 그대로', () => {
+      for (const [hash, replaced] of [['#/event/99', true], ['#/event/program', false], ['#/event/spots', false], ['#/event/spots/', false]] as const) {
+        replaceState.mockClear()
+        useHash(hash)
+        S().goCampus()
+        S().openEvent(99) // 없는 번호 (안내 장소는 0~3)
+        dropUnknownEventSpot()
+        expect(S().event).toEqual({ active: true, spotNo: null })
+        expect(replaceState.mock.calls.length > 0, hash).toBe(replaced)
+        if (replaced) expect(replaceState).toHaveBeenCalledWith(null, '', '#/event')
+      }
+    })
+
+    it('탭이 있는 전체 안내(spotNo = null)에서는 아무 일도 하지 않는다', () => {
+      useHash('#/event/spots')
+      S().openEvent(null, 'spots')
+      dropUnknownEventSpot()
+      expect(S().event).toEqual({ active: true, spotNo: null })
+      expect(S().eventTab).toBe('spots')
+      expect(replaceState).not.toHaveBeenCalled()
+    })
   })
 
   it('dismissIntro("event") 는 안내를 연다', () => {

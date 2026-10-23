@@ -79,6 +79,7 @@ export function ConsentSheet({ open, onAccept, onCancel }: ConsentSheetProps) {
 
         <p className="mt-5 rounded-card bg-paper px-3.5 py-2.5 text-[0.75rem] leading-relaxed text-ink-mute">
           &lsquo;동의하고 시작&rsquo;을 누르면 브라우저가 위치 권한을 한 번 더 확인합니다. 위치 기준: {geoSourceLabel(geo)}
+          <span className="mt-1 block">좌표 대조 자료 © OpenStreetMap contributors (ODbL)</span>
         </p>
 
         <div className="mt-5 flex gap-2.5">

@@ -166,6 +166,54 @@ export interface Tour {
   stops: TourStop[]
 }
 
+// ───────────── 입학설명회 식순 (public/content/program.json) ─────────────
+
+/** reception = 접수 · talk = 설명·발표 · quiz = 퀴즈 이벤트 · tour = 연수·투어 · end = 종료 */
+export type ProgramKind = 'reception' | 'talk' | 'quiz' | 'tour' | 'end'
+export interface ProgramInfo {
+  label: string
+  value: string
+  /** 있으면 이 시설(roomId)이 있는 건물을 지도에서 보여 주는 버튼이 된다 (예: 장소 → gym-4f-p91) */
+  facility?: string
+}
+export interface ProgramRow {
+  /** 24시간제 "HH:MM" */
+  start: string
+  end?: string
+  /** 순서 배지 글자: 개회 · 1부 · BREAK · 종료 … */
+  badge: string
+  /** 시간표 막대 안에 쓰는 짧은 이름 ("3부 · 대입 전형 설명회"). 없으면 badge */
+  short?: string
+  kind: ProgramKind
+  title: string
+  desc?: string
+  /** 번호 칩(①②③)으로 보여 줄 세부 순서 */
+  items?: string[]
+  /** 'spots' = "투어 장소 보기" 버튼 (학교 투어 장소 탭으로) */
+  action?: 'spots'
+}
+export interface ProgramNote {
+  strong: string
+  text: string
+}
+export interface ProgramContact {
+  title: string
+  phones: string[]
+  org: string
+}
+export interface Program {
+  title: string
+  eyebrow: string
+  lead: string
+  anniversary: string
+  dateText: string
+  info: ProgramInfo[]
+  /** 시작 시각 순 */
+  program: ProgramRow[]
+  notes: ProgramNote[]
+  contact: ProgramContact | null
+}
+
 export interface CalibrationPoint {
   px: Pt
   lat: number

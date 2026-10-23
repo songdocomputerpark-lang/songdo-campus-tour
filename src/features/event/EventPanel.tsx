@@ -2,14 +2,16 @@
  * features/event/EventPanel.tsx — 입학설명회 안내 패널 (#/event · #/event/<n>)
  *
  * 렌더 위치(ui/Shell.tsx): 안내 모드(event.active)로 캠퍼스 지도를 볼 때의 패널 슬롯 — 데스크톱 SidePanel / 모바일 BottomSheet(half).
- *  · 전체 안내: 날짜 배지 · 제목 · 부제 · 범례 → 출발 카드(체육관) → ★ 장소를 건물별로 묶은 목록(큰 터치 줄) → "순서대로 따라가기"
+ *  · 전체 안내: 날짜 배지 · 제목 → 탭 [식순 | 학교 투어 장소] (식순 파일이 없으면 탭 없이 학교 투어 장소만)
+ *      식순(#/event · #/event/program): ProgramTab — 히어로 · 시간표 막대 · 식순 목록 · 참석 안내 · 행사 문의
+ *      학교 투어 장소(#/event/spots): 부제 · 범례 → 출발 카드(체육관) → ★ 장소를 건물별로 묶은 목록(큰 터치 줄) → "순서대로 따라가기"
  *  · 장소 상세: "← 전체 안내" · ★n + 이름 · 위치(건물·층) · 층 구성 도해(FloorStack) · 찾아가는 방법(번호 단계) · 같은 건물의 다른 장소 · 평면도/이전·다음
  *
  * 내용은 모두 tour.json(+ floors.json)에서 온다 — 이름·층·안내 문구·찾아가는 방법·머리말을 화면이 지어내지 않는다.
- * 접근성: 목록 줄은 버튼(spotAria), 지도의 카드는 aria-hidden 복제본. 장소가 바뀌면 aria-live 로 알리고, ←/→ 이전·다음, Esc 전체 안내(Shell).
+ * 접근성: 탭은 tablist/tab/tabpanel + ←/→/Home/End. 목록 줄은 버튼(spotAria), 지도의 카드는 aria-hidden 복제본. 장소가 바뀌면 aria-live 로 알리고, ←/→ 이전·다음, Esc 전체 안내(Shell).
  */
-import { CalendarDays, ChevronLeft, ChevronRight, Layers, MapPin, Navigation2, Route, X } from 'lucide-react'
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { CalendarDays, ChevronLeft, ChevronRight, Layers, ListOrdered, MapPin, Navigation2, Route, Star, X } from 'lucide-react'
+import { useEffect, useLayoutEffect, useMemo, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { floorLabel, getBuilding } from '../../data'
 import { tint } from '../../lib/color'
 import { DEFAULT_EVENT_TITLE, photosFor, useContent } from '../../lib/content'
@@ -31,12 +33,16 @@ import {
 } from './eventModel'
 import { useEventUi } from './eventUi'
 import { FloorStack } from './FloorStack'
+import { EVENT_TAB_LABEL, venueOf, type EventTab } from './programModel'
+import { ProgramView } from './ProgramTab'
+import { useEventTab } from './useEventTab'
 import { useStraightLine } from './useStraightLine'
 
 export function EventPanel() {
   const spotNo = useAppStore((s) => s.event.spotNo)
   const spots = useSpots()
   const ready = useContent((s) => s.status === 'ready')
+  const { tab } = useEventTab()
   const spot = spotByNo(spots, spotNo)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -85,7 +91,7 @@ export function EventPanel() {
     if (unknown) dropUnknownEventSpot()
   }, [unknown])
 
-  const announce = spot ? `${spotAria(spot)}, ${spot.locationText}` : '입학설명회 안내 전체 목록'
+  const announce = spot ? `${spotAria(spot)}, ${spot.locationText}` : `입학설명회 안내, ${EVENT_TAB_LABEL[tab]}`
 
   return (
     <div ref={rootRef} data-event-keys>
@@ -109,19 +115,39 @@ export function DateBadge({ date, className = '' }: { date: string; className?: 
     </span>
   )
 }
+const TAB_ORDER: EventTab[] = ['program', 'spots']
+const TAB_ICON: Record<EventTab, typeof ListOrdered> = { program: ListOrdered, spots: Star }
+
 function EventOverview({ spots, loaded }: { spots: SpotIndex; loaded: boolean }) {
   const event = useContent((s) => s.tour.event)
-  const openEvent = useAppStore((s) => s.openEvent)
-  const startTour = useAppStore((s) => s.startTour)
+  const program = useContent((s) => s.program)
   const closePanel = useAppStore((s) => s.closePanel)
-  const groups = useMemo(() => groupStarsByBuilding(spots), [spots])
-  const start = spots.start
-  const startNote = useContent((s) => (spots.start ? s.tour.stops[spots.start.index]?.note : '') ?? '')
+  const setEventTab = useAppStore((s) => s.setEventTab)
+  const { tab, hasProgram, loading } = useEventTab()
+  const venue = useMemo(() => venueOf(program), [program])
   const title = event?.title || DEFAULT_EVENT_TITLE
-  const legend = eventLegend(startNote)
+  const tabbed = hasProgram || loading
+  const rootRef = useRef<HTMLElement>(null)
+
+  // 탭이 바뀌면 '장소 확대'는 풀고(지도는 다시 전체/카드 보기), 패널은 맨 위로. 패널이 사라질 때도 풀어 둔다
+  const firstTab = useRef(true)
+  useLayoutEffect(() => {
+    useEventUi.getState().clearVenueFocus()
+    if (firstTab.current) {
+      firstTab.current = false
+      return
+    }
+    rootRef.current?.closest<HTMLElement>('.scroll-y, .sheet-scroll')?.scrollTo({ top: 0 })
+  }, [tab])
+  useEffect(() => () => useEventUi.getState().clearVenueFocus(), [])
+
+  const showSpots = () => {
+    setEventTab('spots')
+    document.getElementById('ev-tab-spots')?.focus({ preventScroll: true }) // 누른 버튼이 사라지므로 포커스를 새 탭으로
+  }
 
   return (
-    <section aria-labelledby="ev-title">
+    <section ref={rootRef} aria-labelledby="ev-title">
       <header data-sheet-drag className="relative px-5 pb-3 pt-2 lg:pt-6">
         <button
           type="button"
@@ -134,44 +160,130 @@ function EventOverview({ spots, loaded }: { spots: SpotIndex; loaded: boolean })
         </button>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pr-10">
           {event?.date && <DateBadge date={event.date} />}
-          <span className="eyebrow text-gold-deep">Student Guide</span>
+          <span className="eyebrow text-gold-deep">Event Guide</span>
         </div>
         <h2 id="ev-title" tabIndex={-1} className="mt-2.5 text-[1.625rem] font-extrabold leading-[1.15] tracking-[-0.035em] text-navy outline-none focus:shadow-none">
           {title}
         </h2>
-        {event?.subtitle && <p className="mt-1.5 text-[0.9375rem] leading-snug text-ink-soft [text-wrap:balance]">{event.subtitle}</p>}
-        <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-star-deep/30 bg-star-soft/60 py-1 pl-1.5 pr-3 text-[0.8125rem] font-bold text-ink">
+      </header>
+
+      {tabbed ? (
+        <>
+          <EventTabs tab={tab} onSelect={setEventTab} />
+          <div role="tabpanel" id={`ev-panel-${tab}`} aria-labelledby={`ev-tab-${tab}`}>
+            {tab === 'program' ? (
+              program ? (
+                <div className="px-4 pb-8 pt-2">
+                  <ProgramView program={program} venue={venue} onShowSpots={showSpots} onShowVenue={() => useEventUi.getState().focusVenue()} />
+                </div>
+              ) : (
+                <p className="px-5 py-6 text-[0.9375rem] leading-relaxed text-ink-soft">식순을 불러오는 중입니다…</p>
+              )
+            ) : (
+              <SpotsPanel spots={spots} loaded={loaded} />
+            )}
+          </div>
+        </>
+      ) : (
+        <SpotsPanel spots={spots} loaded={loaded} />
+      )}
+    </section>
+  )
+}
+
+/** 분할 버튼 형태의 탭: [식순 | 학교 투어 장소]. 패널 위쪽에 붙어 긴 식순을 내려 보는 동안에도 보인다 */
+function EventTabs({ tab, onSelect }: { tab: EventTab; onSelect: (t: EventTab) => void }) {
+  const refs = useRef<Partial<Record<EventTab, HTMLButtonElement | null>>>({})
+  const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return
+    const i = TAB_ORDER.indexOf(tab)
+    let next: EventTab | null = null
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = TAB_ORDER[(i + 1) % TAB_ORDER.length]
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = TAB_ORDER[(i + TAB_ORDER.length - 1) % TAB_ORDER.length]
+    else if (e.key === 'Home') next = TAB_ORDER[0]
+    else if (e.key === 'End') next = TAB_ORDER[TAB_ORDER.length - 1]
+    if (!next) return
+    e.preventDefault()
+    onSelect(next)
+    refs.current[next]?.focus()
+  }
+  return (
+    <div className="sticky top-0 z-10 bg-[rgb(var(--surface)/0.95)] px-4 pb-2 pt-1">
+      <div role="tablist" aria-label="설명회 안내 구분" onKeyDown={onKeyDown} className="grid grid-cols-2 gap-1 rounded-full border border-line bg-paper-2/80 p-1">
+        {TAB_ORDER.map((t) => {
+          const on = t === tab
+          const Icon = TAB_ICON[t]
+          return (
+            <button
+              key={t}
+              ref={(el) => {
+                refs.current[t] = el
+              }}
+              type="button"
+              role="tab"
+              id={`ev-tab-${t}`}
+              aria-selected={on}
+              aria-controls={`ev-panel-${t}`}
+              tabIndex={on ? 0 : -1}
+              onClick={() => onSelect(t)}
+              className={`inline-flex min-h-[2.75rem] items-center justify-center gap-1.5 rounded-full px-2 text-[0.9375rem] font-bold transition-[background-color,color,box-shadow] duration-180 ${
+                on ? 'bg-navy text-white shadow-soft' : 'text-ink-soft hover:bg-surface hover:text-navy'
+              }`}
+            >
+              <Icon size={16} strokeWidth={2} className={on && t === 'spots' ? 'fill-star text-star' : ''} aria-hidden="true" />
+              {EVENT_TAB_LABEL[t]}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/** 학교 투어 장소 탭: 부제 · 범례 → 출발 카드 → 건물별 ★ 장소 → 순서대로 따라가기 */
+function SpotsPanel({ spots, loaded }: { spots: SpotIndex; loaded: boolean }) {
+  const event = useContent((s) => s.tour.event)
+  const openEvent = useAppStore((s) => s.openEvent)
+  const startTour = useAppStore((s) => s.startTour)
+  const groups = useMemo(() => groupStarsByBuilding(spots), [spots])
+  const start = spots.start
+  const startNote = useContent((s) => (spots.start ? s.tour.stops[spots.start.index]?.note : '') ?? '')
+  const legend = eventLegend(startNote)
+
+  return (
+    <div className="px-4 pb-8 pt-1">
+      <div className="px-1 pb-3">
+        {event?.subtitle && <p className="text-[0.9375rem] leading-snug text-ink-soft [text-wrap:balance]">{event.subtitle}</p>}
+        <p className="mt-2.5 inline-flex items-center gap-2 rounded-full border border-star-deep/30 bg-star-soft/60 py-1 pl-1.5 pr-3 text-[0.8125rem] font-bold text-ink">
           <SpotMark spot={{ no: 1 }} size={20} />
           {legend}
         </p>
-      </header>
-
-      <div className="px-4 pb-8">
-        {!start && groups.length === 0 ? (
-          <p className="px-1 py-6 text-[0.9375rem] leading-relaxed text-ink-soft">{loaded ? '안내 장소를 준비하고 있습니다.' : '안내 장소를 불러오는 중입니다…'}</p>
-        ) : (
-          <>
-            {start && <StartCard spot={start} note={startNote} onOpen={() => openEvent(spotNoOf(start))} />}
-
-            <ul className="mt-3 grid gap-3" aria-label="건물별 안내 장소">
-              {groups.map((g) => (
-                <li key={g.buildingId}>
-                  <GroupCard group={g} onOpen={(s) => openEvent(spotNoOf(s))} />
-                </li>
-              ))}
-            </ul>
-
-            <button type="button" onClick={() => startTour(0)} className="btn btn-ghost mt-4 min-h-[3rem] w-full">
-              <Route size={18} strokeWidth={1.9} aria-hidden="true" />
-              순서대로 따라가기
-            </button>
-            <p className="mt-4 text-[0.75rem] leading-relaxed text-ink-mute">
-              지도에서 ★ 번호나 장소 이름을 눌러도 됩니다. 위치는 학교 도면 기준이며 실제와 일부 다를 수 있습니다.
-            </p>
-          </>
-        )}
       </div>
-    </section>
+
+      {!start && groups.length === 0 ? (
+        <p className="px-1 py-6 text-[0.9375rem] leading-relaxed text-ink-soft">{loaded ? '안내 장소를 준비하고 있습니다.' : '안내 장소를 불러오는 중입니다…'}</p>
+      ) : (
+        <>
+          {start && <StartCard spot={start} note={startNote} onOpen={() => openEvent(spotNoOf(start))} />}
+
+          <ul className="mt-3 grid gap-3" aria-label="건물별 안내 장소">
+            {groups.map((g) => (
+              <li key={g.buildingId}>
+                <GroupCard group={g} onOpen={(s) => openEvent(spotNoOf(s))} />
+              </li>
+            ))}
+          </ul>
+
+          <button type="button" onClick={() => startTour(0)} className="btn btn-ghost mt-4 min-h-[3rem] w-full">
+            <Route size={18} strokeWidth={1.9} aria-hidden="true" />
+            순서대로 따라가기
+          </button>
+          <p className="mt-4 text-[0.75rem] leading-relaxed text-ink-mute">
+            지도에서 ★ 번호나 장소 이름을 눌러도 됩니다. 위치는 학교 도면 기준이며 실제와 일부 다를 수 있습니다.
+          </p>
+        </>
+      )}
+    </div>
   )
 }
 

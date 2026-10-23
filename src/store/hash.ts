@@ -4,11 +4,16 @@
 //   #/b/main/2F                     층 평면도
 //   #/b/main/2F/main-2f-c1-1        방 선택
 //   #/tour/3                        추천 투어 3번째 지점 (1-based)
-//   #/event                         입학설명회 안내(전체)
+//   #/event                         입학설명회 안내(전체) — 기본 탭은 '식순'
+//   #/event/program                 입학설명회 안내 > 식순 탭
+//   #/event/spots                   입학설명회 안내 > 학교 투어 장소 탭
 //   #/event/5                       입학설명회 안내: ★5 장소 (0 = 출발 지점)
 //   #/calibrate                     위치 보정(관리자)
 import { getFloor, getRoom, isBuildingId, isFloorId } from '../data'
 import type { BuildingId, FloorId } from '../data/types'
+import type { EventTab } from '../features/event/programModel'
+
+export type { EventTab }
 
 export type Route =
   | { kind: 'campus' }
@@ -16,7 +21,13 @@ export type Route =
   | { kind: 'floor'; building: BuildingId; floor: FloorId }
   | { kind: 'room'; building: BuildingId; floor: FloorId; room: string }
   | { kind: 'tour'; /** 0-based */ index: number }
-  | { kind: 'event'; /** 별표 번호(1~), 0 = 출발 지점, null = 전체 안내 */ spot: number | null }
+  | {
+      kind: 'event'
+      /** 별표 번호(1~), 0 = 출발 지점, null = 전체 안내 */
+      spot: number | null
+      /** 전체 안내의 탭. 없으면 기본 탭('식순'). 장소 번호가 있으면 쓰지 않는다 */
+      tab?: EventTab
+    }
   | { kind: 'calibrate' }
 
 export function parseHash(hash: string): Route {
@@ -39,6 +50,8 @@ export function parseHash(hash: string): Route {
 
   if (seg[0] === 'event') {
     if (seg[1] === undefined) return { kind: 'event', spot: null }
+    const word = seg[1].toLowerCase()
+    if (word === 'program' || word === 'spots') return { kind: 'event', spot: null, tab: word }
     const n = /^[0-9]+$/.test(seg[1]) ? parseInt(seg[1], 10) : NaN
     return { kind: 'event', spot: Number.isFinite(n) && n <= 99 ? n : null }
   }
@@ -70,7 +83,7 @@ export function buildHash(r: Route): string {
     case 'tour':
       return `#/tour/${r.index + 1}`
     case 'event':
-      return r.spot === null ? '#/event' : `#/event/${r.spot}`
+      return r.spot !== null ? `#/event/${r.spot}` : r.tab ? `#/event/${r.tab}` : '#/event'
     case 'calibrate':
       return '#/calibrate'
   }
