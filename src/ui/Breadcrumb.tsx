@@ -27,10 +27,10 @@ export function Breadcrumb({ className = '' }: { className?: string }) {
     <nav aria-label="현재 위치" className={className}>
       <ol className="flex min-w-0 items-center gap-0.5 text-[0.8125rem] font-medium">
         {tourActive && (
-          <li className="mr-1.5 shrink-0 rounded-full bg-navy px-2 py-0.5 text-[0.6875rem] font-semibold tracking-wide text-white">추천 투어</li>
+          <li className="mr-1.5 shrink-0 rounded-full border border-sky-200 bg-primary-soft px-2 py-0.5 text-[0.6875rem] font-semibold tracking-wide text-primary-hover">추천 투어</li>
         )}
         {eventActive && !tourActive && view === 'campus' && (
-          <li className="mr-1.5 shrink-0 rounded-full bg-navy px-2 py-0.5 text-[0.6875rem] font-semibold tracking-wide text-white">입학설명회 안내</li>
+          <li className="mr-1.5 shrink-0 rounded-full border border-gold-200 bg-gold-50 px-2 py-0.5 text-[0.6875rem] font-semibold tracking-wide text-navy">입학설명회 안내</li>
         )}
         {/* 안내에서 평면도로 들어온 경우: 안내(#/event/<n>)로 돌아가는 버튼 */}
         {eventActive && !tourActive && view === 'floor' && (
@@ -39,7 +39,7 @@ export function Breadcrumb({ className = '' }: { className?: string }) {
               type="button"
               onClick={() => openEvent(eventSpotNo)}
               aria-label="입학설명회 안내로 돌아가기"
-              className="inline-flex min-h-[2.25rem] items-center gap-1 rounded-full bg-navy py-0.5 pl-2 pr-3 text-[0.75rem] font-bold text-white shadow-soft transition-colors hover:bg-navy-700"
+              className="inline-flex min-h-[2.25rem] items-center gap-1 rounded-full border border-gold-200 bg-gold-50 py-0.5 pl-2 pr-3 text-[0.75rem] font-bold text-navy shadow-soft transition-colors hover:bg-gold-soft"
             >
               <ArrowLeft size={14} strokeWidth={2.4} aria-hidden="true" />
               설명회 안내

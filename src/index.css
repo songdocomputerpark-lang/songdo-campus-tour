@@ -27,12 +27,23 @@
   --line: 216 210 196; /* #d8d2c4 */
   --line-strong: 190 182 163;
   --gold: 184 144 47; /* #b8902f */
-  --gold-deep: 128 96 20; /* 텍스트용 (paper 위 AA) */
+  --gold-deep: 133 86 0; /* #855600 — 금색 글자용 (흰색·gold-50·paper 위 AA ≥ 5.2) */
   --gold-soft: 240 226 186;
+  --gold-50: 255 246 220; /* #fff6dc 금빛 틴트 배경 */
+  --gold-200: 243 217 139; /* #f3d98b 금빛 틴트 테두리 */
   --leaf: 58 153 80; /* #3a9950 */
   --leaf-soft: 214 236 220;
   --surface: 255 253 248;
   --danger: 176 42 42;
+  /* 밝고 화사한 아침의 캠퍼스: 밝은 주조색(버튼·활성 상태) + 하늘/금/민트 틴트. 남색은 글자·가는 선·작은 아이콘에만 쓴다 */
+  --primary: 37 99 235; /* #2563eb — 흰 글자 대비 5.17 */
+  --primary-hover: 29 79 216; /* #1d4fd8 — 흰 글자 6.64 · primary-soft 위 글자 5.80 */
+  --primary-soft: 232 240 254; /* #e8f0fe */
+  --sky-50: 238 245 255; /* #eef5ff */
+  --sky-200: 207 224 251; /* #cfe0fb */
+  --mint-50: 234 247 240; /* #eaf7f0 */
+  --mint-200: 191 230 207; /* #bfe6cf */
+  --mint-ink: 22 101 62; /* #16653e — mint-50 위 글자 */
   --star: 255 196 11; /* 학생 안내 장소 ★ (엠블럼 금색 #ffc40b) — 남색 글자와 대비 AA */
   --star-deep: 150 108 0; /* ★ 외곽선 */
   --star-soft: 255 236 170;
@@ -152,7 +163,7 @@ html {
     font-weight: 550;
     line-height: 1.4;
     border: 1px solid rgb(var(--line));
-    background: rgb(var(--paper) / 0.7);
+    background: rgb(255 255 255 / 0.85);
     color: rgb(var(--ink-soft));
   }
   .btn {
@@ -170,22 +181,24 @@ html {
   .btn:active {
     transform: scale(0.98);
   }
+  /* 주 버튼: 밝은 파랑 + 흰 글자(대비 5.17). 남색 덩어리를 쓰지 않는다 */
   .btn-primary {
-    background: rgb(var(--navy));
+    background: rgb(var(--primary));
     color: #fff;
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset, 0 6px 16px -6px rgb(var(--navy) / 0.55);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.18) inset, 0 6px 16px -6px rgb(var(--primary) / 0.5);
   }
   .btn-primary:hover {
-    background: rgb(var(--navy-700));
+    background: rgb(var(--primary-hover));
   }
   .btn-ghost {
-    background: rgb(var(--surface) / 0.7);
+    background: rgb(255 255 255 / 0.92);
     color: rgb(var(--navy));
-    border: 1px solid rgb(var(--navy) / 0.28);
+    border: 1px solid rgb(var(--sky-200));
+    box-shadow: 0 1px 2px rgb(17 24 39 / 0.05);
   }
   .btn-ghost:hover {
-    background: rgb(var(--surface));
-    border-color: rgb(var(--navy) / 0.55);
+    background: rgb(var(--sky-50));
+    border-color: rgb(var(--primary) / 0.45);
   }
   .scroll-y {
     overflow-y: auto;
@@ -246,15 +259,15 @@ html {
   pointer-events: none;
 }
 .site-road {
-  fill: #e5e0d3;
-  stroke: rgb(var(--line-strong) / 0.8);
+  fill: #ece8dc;
+  stroke: rgb(var(--line-strong) / 0.7);
   stroke-width: 1px;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
 .site-field {
-  fill: #dfe6d5;
-  stroke: #b3c3a5;
+  fill: #dcecd2;
+  stroke: #a9cb9a;
   stroke-width: 1.1px;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
@@ -492,7 +505,7 @@ html {
   animation: spot-pulse 2.6s ease-out infinite;
 }
 .spot-pulse[data-kind='start'] {
-  fill: rgb(var(--navy) / 0.35);
+  fill: rgb(var(--star-deep) / 0.3);
 }
 @keyframes spot-pulse {
   0% {
@@ -692,16 +705,13 @@ html {
   stroke-width: 1.2px;
 }
 .ev-compact[data-start='true'] .ev-compact-face {
-  fill: rgb(var(--navy));
-  stroke: rgb(var(--surface));
+  fill: rgb(var(--surface));
+  stroke: rgb(var(--star-deep));
   stroke-width: 1.6px;
 }
 .ev-compact[data-sel='true'] .ev-compact-face {
   stroke: rgb(var(--navy));
   stroke-width: 2.4px;
-}
-.ev-compact[data-sel='true'][data-start='true'] .ev-compact-face {
-  stroke: rgb(var(--star));
 }
 .ev-pin-pulse {
   fill: rgb(var(--star) / 0.5);

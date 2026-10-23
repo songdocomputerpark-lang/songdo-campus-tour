@@ -247,7 +247,7 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
   return createPortal(
     <div className="fixed inset-x-0 z-50" style={boxStyle}>
       {/* 데스크톱 스크림 (모바일은 패널이 화면 전체) */}
-      <div aria-hidden="true" className="absolute inset-0 hidden animate-fade-in bg-ink/30 backdrop-blur-[2px] [animation-duration:220ms] lg:block" onClick={onClose} />
+      <div aria-hidden="true" className="absolute inset-0 hidden animate-fade-in bg-navy/15 backdrop-blur-[2px] [animation-duration:220ms] lg:block" onClick={onClose} />
 
       <div
         ref={dialogRef}
@@ -467,7 +467,7 @@ function ResultRow({ hit, id, active, onChoose, onHover }: { hit: SearchHit; id:
       onMouseMove={onHover}
       onMouseDown={(e) => e.preventDefault() /* 입력창 포커스 유지 */}
       onClick={() => onChoose(hit)}
-      className={`relative flex min-h-[3.5rem] scroll-mt-10 cursor-pointer items-center gap-3 rounded-2xl px-3 py-2 transition-colors duration-100 ${active ? 'bg-navy/[0.07]' : ''}`}
+      className={`relative flex min-h-[3.5rem] scroll-mt-10 cursor-pointer items-center gap-3 rounded-2xl px-3 py-2 transition-colors duration-100 ${active ? 'bg-primary-soft' : ''}`}
     >
       <span
         className={`absolute bottom-2.5 left-0 top-2.5 w-[3px] rounded-full transition-opacity duration-100 ${active ? 'opacity-100' : 'opacity-0'}`}

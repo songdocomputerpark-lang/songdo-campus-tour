@@ -129,9 +129,11 @@ export function flagPath(r: number): string {
   return `M${-4 * s} ${6 * s}V${-6 * s}M${-4 * s} ${-5.4 * s}h${7.6 * s}l${-1.9 * s} ${2.6 * s}l${1.9 * s} ${2.6 * s}h${-7.6 * s}`
 }
 
-/** 안내 장소 색: ★ = 엠블럼 금색(남색 글자), 출발 = 남색(흰 글자) */
+/** 안내 장소 색: ★ = 엠블럼 금색(남색 글자), 출발 = 흰 바탕 + 금빛 테두리(남색 깃발·글자) — 밝은 지도 위에서 덩어리가 지지 않게 */
 export const SPOT_STAR_FILL = 'rgb(var(--star))'
-export const SPOT_START_FILL = 'rgb(var(--navy))'
+export const SPOT_START_FILL = 'rgb(var(--surface))'
+export const SPOT_START_INK = 'rgb(var(--navy))'
+export const SPOT_START_EDGE = 'rgb(var(--star-deep))'
 
 /** 방위 화살표 본체(0° = 위쪽이 북). 지름 d 의 원 안에 그려진다. */
 export function NorthNeedle({ size = 40 }: { size?: number }) {

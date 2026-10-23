@@ -108,7 +108,7 @@ export function EventPanel() {
 export function DateBadge({ date, className = '' }: { date: string; className?: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border border-gold/60 bg-gradient-to-b from-star-soft to-gold-soft py-1 pl-2 pr-3 text-[0.8125rem] font-bold leading-none text-gold-deep shadow-[0_1px_0_rgb(255_255_255/0.7)_inset,0_2px_6px_-2px_rgb(184_144_47/0.45)] ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border border-gold-200 bg-gold-50 py-1 pl-2 pr-3 text-[0.8125rem] font-bold leading-none text-gold-deep shadow-[0_1px_0_rgb(255_255_255/0.8)_inset,0_2px_6px_-2px_rgb(184_144_47/0.35)] ${className}`}
     >
       <CalendarDays size={14} strokeWidth={2} aria-hidden="true" />
       <span className="tnum">{date}</span>
@@ -209,7 +209,7 @@ function EventTabs({ tab, onSelect }: { tab: EventTab; onSelect: (t: EventTab) =
   }
   return (
     <div className="sticky top-0 z-10 bg-[rgb(var(--surface)/0.95)] px-4 pb-2 pt-1">
-      <div role="tablist" aria-label="설명회 안내 구분" onKeyDown={onKeyDown} className="grid grid-cols-2 gap-1 rounded-full border border-line bg-paper-2/80 p-1">
+      <div role="tablist" aria-label="설명회 안내 구분" onKeyDown={onKeyDown} className="grid grid-cols-2 gap-1 rounded-full border border-line/70 bg-paper-2 p-1">
         {TAB_ORDER.map((t) => {
           const on = t === tab
           const Icon = TAB_ICON[t]
@@ -227,10 +227,10 @@ function EventTabs({ tab, onSelect }: { tab: EventTab; onSelect: (t: EventTab) =
               tabIndex={on ? 0 : -1}
               onClick={() => onSelect(t)}
               className={`inline-flex min-h-[2.75rem] items-center justify-center gap-1.5 rounded-full px-2 text-[0.9375rem] font-bold transition-[background-color,color,box-shadow] duration-180 ${
-                on ? 'bg-navy text-white shadow-soft' : 'text-ink-soft hover:bg-surface hover:text-navy'
+                on ? 'bg-white text-navy shadow-[0_1px_2px_rgb(17_24_39/0.1),0_2px_8px_-2px_rgb(17_24_39/0.14)]' : 'text-ink-soft hover:bg-white/60 hover:text-navy'
               }`}
             >
-              <Icon size={16} strokeWidth={2} className={on && t === 'spots' ? 'fill-star text-star' : ''} aria-hidden="true" />
+              <Icon size={16} strokeWidth={2} className={on && t === 'spots' ? 'fill-star text-star-deep' : ''} aria-hidden="true" />
               {EVENT_TAB_LABEL[t]}
             </button>
           )
@@ -254,7 +254,7 @@ function SpotsPanel({ spots, loaded }: { spots: SpotIndex; loaded: boolean }) {
     <div className="px-4 pb-8 pt-1">
       <div className="px-1 pb-3">
         {event?.subtitle && <p className="text-[0.9375rem] leading-snug text-ink-soft [text-wrap:balance]">{event.subtitle}</p>}
-        <p className="mt-2.5 inline-flex items-center gap-2 rounded-full border border-star-deep/30 bg-star-soft/60 py-1 pl-1.5 pr-3 text-[0.8125rem] font-bold text-ink">
+        <p className="mt-2.5 inline-flex items-center gap-2 rounded-full border border-gold-200 bg-gold-50 py-1 pl-1.5 pr-3 text-[0.8125rem] font-bold text-ink">
           <SpotMark spot={{ no: 1 }} size={20} />
           {legend}
         </p>
@@ -298,19 +298,19 @@ function StartCard({ spot, note, onOpen }: { spot: Spot; note: string; onOpen: (
       onFocus={() => setHover(spot.roomId)}
       onBlur={() => setHover(null)}
       aria-label={`${spotAria(spot)}, ${spot.locationText}`}
-      className="group relative block w-full overflow-hidden rounded-card bg-gradient-to-br from-navy to-navy-700 p-4 text-left text-white shadow-soft transition-[transform,box-shadow] duration-180 hover:shadow-float active:scale-[0.99]"
+      className="group relative block w-full overflow-hidden rounded-card border border-gold-200 bg-gradient-to-br from-gold-50 to-white p-4 text-left text-navy shadow-soft transition-[transform,box-shadow] duration-180 hover:shadow-float active:scale-[0.99]"
     >
-      <span className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgb(var(--star)/0.3),transparent_68%)]" aria-hidden="true" />
-      <span className="flex items-center gap-3.5">
-        <SpotMark spot={spot} size={44} className="drop-shadow" />
+      <span className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgb(var(--star)/0.26),transparent_68%)]" aria-hidden="true" />
+      <span className="relative flex items-center gap-3.5">
+        <SpotMark spot={spot} size={44} gold className="drop-shadow-sm" />
         <span className="min-w-0 flex-1">
-          <span className="eyebrow block !text-[0.6875rem] text-star">Start · 출발</span>
-          <span className="mt-0.5 block text-[1.25rem] font-extrabold leading-tight tracking-[-0.02em]">{spot.label}</span>
-          <span className="mt-0.5 block text-[0.8125rem] font-medium text-white/80">{spot.locationText}</span>
+          <span className="eyebrow block !text-[0.6875rem] text-gold-deep">Start · 출발</span>
+          <span className="mt-0.5 block text-[1.25rem] font-extrabold leading-tight tracking-[-0.02em] text-navy">{spot.label}</span>
+          <span className="mt-0.5 block text-[0.8125rem] font-medium text-ink-soft">{spot.locationText}</span>
         </span>
-        <ChevronRight size={20} className="shrink-0 text-white/70 transition-transform duration-180 group-hover:translate-x-0.5" aria-hidden="true" />
+        <ChevronRight size={20} className="shrink-0 text-gold-deep transition-transform duration-180 group-hover:translate-x-0.5" aria-hidden="true" />
       </span>
-      {note && <span className="mt-3 block border-t border-white/15 pt-2.5 text-[0.875rem] leading-relaxed text-white/90 [text-wrap:pretty]">{note}</span>}
+      {note && <span className="relative mt-3 block border-t border-gold-200 pt-2.5 text-[0.875rem] leading-relaxed text-ink-soft [text-wrap:pretty]">{note}</span>}
     </button>
   )
 }
@@ -319,7 +319,7 @@ function GroupCard({ group, onOpen }: { group: SpotGroup; onOpen: (s: Spot) => v
   const { building, spots } = group
   const setHover = useEventUi((s) => s.setHover)
   return (
-    <section className="overflow-hidden rounded-card border border-line bg-surface/80 shadow-soft" aria-label={`${building.name} 안내 장소 ${spots.length}곳`}>
+    <section className="overflow-hidden rounded-card border border-line bg-white shadow-soft" aria-label={`${building.name} 안내 장소 ${spots.length}곳`}>
       <header className="flex items-center gap-2.5 px-3.5 py-2" style={{ background: tint(building.color, 0.16), borderBottom: '1px solid rgb(var(--line) / 0.9)' }}>
         <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full font-display text-[0.8125rem] font-semibold text-white" style={{ background: building.color }} aria-hidden="true">
           {building.code}
@@ -406,7 +406,7 @@ function EventDetail({ spot, spots }: { spot: Spot; spots: SpotIndex }) {
           </div>
         </div>
         <p className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.9375rem] font-semibold text-ink">
-          <span className="inline-flex items-center gap-1.5 rounded-full py-1 pl-2 pr-3 text-white" style={{ background: building.color }}>
+          <span className="inline-flex items-center gap-1.5 rounded-full border py-1 pl-2 pr-3 text-ink" style={{ background: tint(building.color, 0.16), borderColor: tint(building.color, 0.55) }}>
             <MapPin size={15} strokeWidth={2.1} aria-hidden="true" />
             {spot.locationText}
           </span>
@@ -421,7 +421,7 @@ function EventDetail({ spot, spots }: { spot: Spot; spots: SpotIndex }) {
           </div>
         )}
 
-        <div className="rounded-card border border-line bg-surface/70 px-3 pb-3 pt-4">
+        <div className="rounded-card border border-line bg-white px-3 pb-3 pt-4 shadow-soft">
           <FloorStack building={building} target={spot} marks={here} />
         </div>
 
@@ -437,8 +437,8 @@ function EventDetail({ spot, spots }: { spot: Spot; spots: SpotIndex }) {
             </h3>
             <ol className="grid gap-2">
               {howto.map((h, i) => (
-                <li key={i} className="flex gap-3 rounded-card border border-line bg-surface/70 px-3.5 py-3">
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-navy text-[0.8125rem] font-bold text-white tnum" aria-hidden="true">
+                <li key={i} className="flex gap-3 rounded-card border border-line bg-white px-3.5 py-3 shadow-soft">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-[0.8125rem] font-bold text-white tnum" aria-hidden="true">
                     {i + 1}
                   </span>
                   <span className="min-w-0 pt-0.5 text-[0.9375rem] leading-relaxed text-ink [text-wrap:pretty]">

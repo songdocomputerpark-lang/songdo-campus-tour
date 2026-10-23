@@ -235,7 +235,7 @@ describe('식순 화면(서버 렌더)', () => {
 
   it('히어로: 눈썹 · 강조 제목 · 안내 · 개교 문구 · 일시/장소/접수', () => {
     expect(html).toContain('꿈을 향한 선택')
-    expect(html).toContain('<span class="text-star">입학설명회</span>')
+    expect(html).toMatch(/<span class="[^"]*text-gold-deep[^"]*">입학설명회<\/span>/) // 진한 금색 글자(형광펜 띠 위)
     expect(html).toContain('설명회 순서와 시간을 미리 확인해 주세요.')
     expect(html).toContain('개교 120주년 · 1906–2026')
     for (const label of ['일시', '장소', '접수']) expect(html).toContain(`>${label}</dt>`)
@@ -276,8 +276,8 @@ describe('식순 화면(서버 렌더)', () => {
 
   it('5부 줄에만 "투어 장소 보기 →" 버튼, BREAK 줄은 연한 금색 배경', () => {
     expect((html.match(/투어 장소 보기/g) ?? []).length).toBe(1)
-    expect(html).toContain('from-star-soft/80')
-    expect((html.match(/from-star-soft\/80/g) ?? []).length).toBe(1)
+    expect(html).toContain('from-gold-50')
+    expect((html.match(/from-gold-50/g) ?? []).length).toBe(1)
   })
 
   it('참석 안내: 굵은 글씨 + 본문 · 행사 문의: tel 링크 + 기관명', () => {

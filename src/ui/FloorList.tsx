@@ -75,7 +75,7 @@ function RoomRow({ room, selected, onSelect, spot }: { room: Room; selected: boo
         onClick={onSelect}
         aria-current={selected ? 'true' : undefined}
         className={`group flex min-h-[2.75rem] w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-[0.9375rem] transition-colors duration-180 ${
-          selected ? 'bg-navy/[0.07] font-semibold text-navy' : 'text-ink hover:bg-paper-2'
+          selected ? 'bg-primary-soft font-semibold text-navy' : 'text-ink hover:bg-paper-2'
         }`}
       >
         {spot && <SpotMark spot={spot} size={22} />}

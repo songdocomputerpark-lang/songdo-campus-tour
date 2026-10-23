@@ -18,7 +18,7 @@ import { boundsOf, centroid, expandBounds, polygonPoints } from '../lib/geometry
 import { estimateTextWidth } from './buildingLabels'
 import { useAppStore } from '../store/useAppStore'
 import { CAT_KEEP } from './categoryTint'
-import { CoreGlyph, flagPath, SPOT_START_FILL, SPOT_STAR_FILL, starPath } from './icons'
+import { CoreGlyph, flagPath, SPOT_START_EDGE, SPOT_START_FILL, SPOT_START_INK, SPOT_STAR_FILL, starPath } from './icons'
 import { registerMap } from './mapBus'
 import { MapViewport } from './MapViewport'
 import { LABEL_LINE_HEIGHT, layoutLabel, textEm, type LabelLayout } from './roomLayout'
@@ -199,7 +199,7 @@ function SpotBadge({ room, spot, selected, onSelect }: { room: Room; spot: Spot;
   const x0 = -w / 2
   const y0 = -h / 2
   const cy = y0 + BADGE_H / 2
-  const fg = start ? '#fff' : 'rgb(var(--navy))'
+  const fg = start ? SPOT_START_INK : 'rgb(var(--navy))'
   return (
     <g
       className="spot-badge"
@@ -217,12 +217,12 @@ function SpotBadge({ room, spot, selected, onSelect }: { room: Room; spot: Spot;
         rx={14}
         style={{
           fill: start ? SPOT_START_FILL : SPOT_STAR_FILL,
-          stroke: selected ? 'rgb(var(--navy))' : start ? 'rgb(var(--surface))' : 'rgb(var(--star-deep))',
+          stroke: selected ? 'rgb(var(--navy))' : start ? SPOT_START_EDGE : 'rgb(var(--star-deep))',
           strokeWidth: selected ? 2.4 : 1.3,
         }}
       />
       {start ? (
-        <path d={BADGE_FLAG} transform={`translate(${x0 + 9 + 7.5} ${cy})`} fill="none" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={BADGE_FLAG} transform={`translate(${x0 + 9 + 7.5} ${cy})`} fill="none" stroke={SPOT_START_INK} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
       ) : (
         <path d={BADGE_STAR} transform={`translate(${x0 + 9 + 7.5} ${cy})`} style={{ fill: 'rgb(var(--navy))' }} />
       )}

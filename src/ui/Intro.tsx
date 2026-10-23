@@ -62,14 +62,20 @@ export function Intro() {
           <polygon points={polygonPoints(site.boundary)} fill="none" stroke="rgb(11 31 75 / 0.26)" strokeWidth={2.5} strokeDasharray="10 8" />
           <polygon points={polygonPoints(site.field)} fill="rgb(58 153 80 / 0.11)" stroke="rgb(11 31 75 / 0.16)" strokeWidth={1.5} />
           {campus.minor.map((m) => (
-            <polygon key={m.id} points={polygonPoints(m.poly)} fill="rgb(11 31 75 / 0.11)" />
+            <polygon key={m.id} points={polygonPoints(m.poly)} fill="rgb(37 99 235 / 0.1)" />
           ))}
           {buildings.map((b) => (
-            <polygon key={b.id} points={polygonPoints(b.poly)} fill="rgb(11 31 75 / 0.2)" stroke="rgb(11 31 75 / 0.45)" strokeWidth={2.5} />
+            <polygon key={b.id} points={polygonPoints(b.poly)} fill="rgb(37 99 235 / 0.17)" stroke="rgb(37 99 235 / 0.5)" strokeWidth={2.5} />
           ))}
         </g>
       </svg>
       <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 46%, rgb(var(--paper) / 0.9) 0%, rgb(var(--paper) / 0.7) 42%, rgb(var(--paper) / 0.1) 100%)' }} />
+      {/* 아침 햇살: 위쪽은 맑은 하늘빛, 오른쪽 위는 금빛 광채 (장식) */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(70% 42% at 12% 0%, rgb(var(--sky-200) / 0.75), transparent 70%), radial-gradient(60% 38% at 92% 2%, rgb(var(--star) / 0.24), transparent 70%)' }}
+        aria-hidden="true"
+      />
 
       <div className="relative z-10 mx-auto flex h-full max-w-2xl flex-col items-center justify-center px-6 text-center">
         <div className="animate-fade-up" style={D(80)}>

@@ -59,7 +59,7 @@ export function AboutModal() {
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center lg:p-6" role="presentation">
-      <div className="absolute inset-0 animate-fade-in bg-ink/45" onClick={close} aria-hidden="true" />
+      <div className="absolute inset-0 animate-fade-in bg-navy/25 backdrop-blur-[2px]" onClick={close} aria-hidden="true" />
       <article
         ref={ref}
         role="dialog"

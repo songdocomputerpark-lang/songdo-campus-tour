@@ -1,7 +1,7 @@
 /**
  * features/event/ProgramTab.tsx — '설명회 안내' > 식순 탭 (#/event · #/event/program)
  *
- *  히어로 카드(남색, 학교 안내문의 머리와 같은 인상) → 한눈에 보는 시간표(막대) → 식순 목록 → 참석 안내 → 행사 문의
+ *  히어로 카드(흰색→하늘색 그라데이션 + 금빛 광채, 학교 안내문의 머리와 같은 인상) → 한눈에 보는 시간표(막대) → 식순 목록 → 참석 안내 → 행사 문의
  *  · 모든 글자(제목·시간·이름·전화번호)는 public/content/program.json 에서 온다 — 화면이 지어내지 않는다.
  *  · 날짜·시각에 따라 달라지는 표시는 없다 (진행 중 표시 없음) — 어느 날 열어도 같은 화면.
  *  · ProgramView 는 props 만으로 그려지는 순수 표시 컴포넌트다 (스토어·지도 비의존 → 서버 렌더로 테스트).
@@ -11,26 +11,34 @@ import { MapPin, Phone } from 'lucide-react'
 import type { Program, ProgramKind, ProgramRow } from '../../data/types'
 import { buildTimeline, circled, durationMin, formatDuration, splitHighlight, telHref, type Timeline, type Venue } from './programModel'
 
-/** 시간표 막대 구간 색: 설명·발표 = 남색/파랑 계열, 퀴즈 이벤트 = 금색, 연수·투어 = 초록 계열 (흰 글자 대비 AA 이상) */
+/**
+ * 시간표 막대 구간 색 — 밝고 화사한 톤. 설명·발표 = 파랑 계열, 퀴즈 이벤트 = 금색, 연수·투어 = 초록 계열.
+ * 글자색은 구간 색마다 AA(≥ 4.5)가 되도록 고른다:
+ *   #5b8def·#7aa6f5·#ffc83d·#3fbf86·#7fd6ab 위 = 남색 / #3f6fd6 위 = 흰색
+ */
 const SEGMENT_CLASS: Record<ProgramKind, string[]> = {
-  talk: ['bg-navy text-white', 'bg-[rgb(40_78_146)] text-white', 'bg-navy-700 text-white', 'bg-[rgb(55_104_178)] text-white'],
-  quiz: ['bg-star text-navy'],
-  tour: ['bg-[rgb(28_104_57)] text-white', 'bg-[rgb(46_132_74)] text-white'],
-  reception: ['bg-paper-3 text-ink'],
-  end: ['bg-paper-3 text-ink'],
+  talk: ['bg-[#5b8def] text-navy', 'bg-[#7aa6f5] text-navy', 'bg-[#3f6fd6] text-white'],
+  quiz: ['bg-[#ffc83d] text-navy'],
+  tour: ['bg-[#3fbf86] text-navy', 'bg-[#7fd6ab] text-navy'],
+  reception: ['bg-paper-2 text-ink'],
+  end: ['bg-paper-2 text-ink'],
 }
+/** 식순 줄의 부 배지: 연한 틴트 배경 + 같은 계열의 진한 글자 (알약) */
 const BADGE_CLASS: Record<ProgramKind, string> = {
-  talk: 'bg-navy text-white',
-  quiz: 'border border-star-deep/40 bg-star text-navy',
-  tour: 'bg-[rgb(28_104_57)] text-white',
+  talk: 'border border-sky-200 bg-primary-soft text-primary-hover',
+  quiz: 'border border-gold-200 bg-gold-50 text-gold-deep',
+  tour: 'border border-mint-200 bg-mint-50 text-mint-ink',
   reception: 'border border-line bg-paper-2 text-ink-soft',
   end: 'border border-line bg-paper-2 text-ink-soft',
 }
 const LEGEND: { kind: ProgramKind; label: string; dot: string }[] = [
-  { kind: 'talk', label: '설명·발표', dot: 'bg-navy' },
-  { kind: 'quiz', label: '퀴즈 이벤트', dot: 'bg-star' },
-  { kind: 'tour', label: '연수·투어', dot: 'bg-[rgb(28_104_57)]' },
+  { kind: 'talk', label: '설명·발표', dot: 'bg-[#5b8def]' },
+  { kind: 'quiz', label: '퀴즈 이벤트', dot: 'bg-[#ffc83d]' },
+  { kind: 'tour', label: '연수·투어', dot: 'bg-[#3fbf86]' },
 ]
+/** 히어로 정보 타일 색(차례로 하늘 · 금 · 민트) — 라벨 글자는 각 틴트 위 AA */
+const TILE_CLASS = ['border-sky-200 bg-sky-50', 'border-gold-200 bg-gold-50', 'border-mint-200 bg-mint-50']
+const TILE_LABEL_CLASS = ['text-primary-hover', 'text-gold-deep', 'text-mint-ink']
 
 export interface ProgramViewProps {
   program: Program
@@ -61,7 +69,7 @@ export function ProgramView({ program, venue, onShowSpots, onShowVenue }: Progra
       {program.notes.length > 0 && (
         <section aria-labelledby="ev-notes-h">
           <SectionTitle id="ev-notes-h" eyebrow="Notice" title="참석 안내" />
-          <ul role="list" className="grid gap-2 rounded-card border border-line bg-surface/70 px-4 py-3.5">
+          <ul role="list" className="grid gap-2 rounded-card border border-line bg-white px-4 py-3.5 shadow-soft">
             {program.notes.map((n, i) => (
               <li key={i} className="flex gap-2.5 text-[0.9375rem] leading-relaxed text-ink-soft [text-wrap:pretty]">
                 <span className="mt-[0.6em] h-1.5 w-1.5 shrink-0 rounded-full bg-gold" aria-hidden="true" />
@@ -92,47 +100,59 @@ function SectionTitle({ id, eyebrow, title }: { id: string; eyebrow: string; tit
 
 function Hero({ program, venue, onShowVenue }: { program: Program; venue: Venue | null; onShowVenue: () => void }) {
   const [before, mark, after] = splitHighlight(program.title, '입학설명회')
+  // 정보 칸이 홀수면 첫 칸(일시)을 두 칸 폭으로 — 긴 날짜가 한 줄에 들어가고 나머지는 나란히
+  const wideFirst = program.info.length % 2 === 1
   return (
-    <section aria-labelledby="ev-prog-title" className="relative overflow-hidden rounded-card bg-gradient-to-br from-navy to-navy-700 p-5 text-white shadow-soft">
-      <span className="pointer-events-none absolute -right-12 -top-14 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgb(var(--star)/0.28),transparent_68%)]" aria-hidden="true" />
-      <span className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-star/80 to-transparent" aria-hidden="true" />
+    <section aria-labelledby="ev-prog-title" className="relative overflow-hidden rounded-card border border-sky-200 bg-gradient-to-br from-white via-white to-sky-50 p-5 shadow-soft">
+      <span className="pointer-events-none absolute -right-12 -top-14 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgb(var(--star)/0.34),transparent_68%)]" aria-hidden="true" />
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-star to-transparent" aria-hidden="true" />
       <div className="relative">
-        {program.eyebrow && <p className="eyebrow !text-[0.6875rem] text-star">{program.eyebrow}</p>}
-        <h3 id="ev-prog-title" className="mt-1.5 text-[1.5rem] font-extrabold leading-[1.18] tracking-[-0.035em] [text-wrap:balance]">
+        {program.eyebrow && <p className="eyebrow !text-[0.6875rem] text-gold-deep">{program.eyebrow}</p>}
+        <h3 id="ev-prog-title" className="mt-1.5 text-[1.5rem] font-extrabold leading-[1.18] tracking-[-0.035em] text-navy [text-wrap:balance]">
           {before}
-          {mark && <span className="text-star">{mark}</span>}
+          {mark && (
+            // 노란 형광펜 띠 위의 진한 금색 글자
+            <span className="-mx-0.5 rounded-[3px] bg-[linear-gradient(to_top,rgb(255_222_110/0.85)_0_46%,transparent_46%)] px-0.5 text-gold-deep [box-decoration-break:clone]">{mark}</span>
+          )}
           {after}
         </h3>
-        {program.lead && <p className="mt-2 text-[0.9375rem] leading-snug text-white/85 [text-wrap:pretty]">{program.lead}</p>}
+        {program.lead && <p className="mt-2 text-[0.9375rem] leading-snug text-ink-soft [text-wrap:pretty]">{program.lead}</p>}
         {program.anniversary && (
-          <p className="mt-3 flex items-center gap-2.5 text-star">
-            <span className="h-px w-7 bg-star/60" aria-hidden="true" />
+          <p className="mt-3 flex items-center gap-2.5 text-gold-deep">
+            <span className="h-px w-7 bg-gold/60" aria-hidden="true" />
             <span className="font-display text-[0.9375rem] font-medium tracking-[0.12em]">{program.anniversary}</span>
           </p>
         )}
         {program.info.length > 0 && (
-          <dl className="mt-4 grid gap-px overflow-hidden rounded-xl border border-white/15 bg-white/15">
+          <dl className="mt-4 grid grid-cols-2 gap-2">
             {program.info.map((it, i) => {
               const isVenue = !!venue && !!it.facility && it.facility === venue.roomId
+              const tone = i % TILE_CLASS.length
               return (
-                <div key={i} className="flex items-stretch bg-navy-700/90">
-                  <dt className="grid w-[3.5rem] shrink-0 place-items-center border-r border-white/10 px-2 text-[0.75rem] font-bold tracking-wide text-star">{it.label}</dt>
-                  <dd className="min-w-0 flex-1">
+                <div
+                  key={i}
+                  className={`relative min-w-0 rounded-xl border px-3 py-2 ${TILE_CLASS[tone]} ${wideFirst && i === 0 ? 'col-span-2' : ''} ${
+                    isVenue ? 'transition-colors hover:bg-white/70 has-[:focus-visible]:bg-white/70' : ''
+                  }`}
+                >
+                  <dt className={`text-[0.6875rem] font-bold tracking-wide ${TILE_LABEL_CLASS[tone]}`}>{it.label}</dt>
+                  <dd className="mt-0.5 min-h-[1.5rem]">
                     {isVenue ? (
+                      // 버튼의 눌림 영역은 타일 전체로 넓힌다(::after) — 터치 타깃 ≥ 44px
                       <button
                         type="button"
                         onClick={onShowVenue}
                         aria-label={`${it.value}, 지도에서 ${venue.buildingName} 보기`}
-                        className="group flex min-h-[2.75rem] w-full items-center gap-2 px-3.5 py-2 text-left text-[0.9375rem] font-bold transition-colors hover:bg-white/10 focus-visible:bg-white/10"
+                        className="flex w-full flex-wrap items-center gap-x-2 gap-y-1 text-left after:absolute after:inset-0 after:rounded-xl after:content-['']"
                       >
-                        <span className="min-w-0 flex-1">{it.value}</span>
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-star px-2.5 py-1 text-[0.75rem] font-bold text-navy">
+                        <span className="min-w-0 text-[0.9375rem] font-bold text-navy">{it.value}</span>
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-star px-2 py-0.5 text-[0.75rem] font-bold text-navy shadow-soft">
                           <MapPin size={13} strokeWidth={2.2} aria-hidden="true" />
                           지도에서 보기
                         </span>
                       </button>
                     ) : (
-                      <span className="flex min-h-[2.75rem] items-center px-3.5 py-2 text-[0.9375rem] font-bold tnum">{it.value}</span>
+                      <span className="block text-[0.9375rem] font-bold text-navy tnum">{it.value}</span>
                     )}
                   </dd>
                 </div>
@@ -154,7 +174,7 @@ function TimelineBar({ timeline }: { timeline: Timeline }) {
   return (
     <section aria-labelledby="ev-timeline-h">
       <SectionTitle id="ev-timeline-h" eyebrow="Timetable" title="한눈에 보는 시간표" />
-      <div className="rounded-card border border-line bg-surface/70 px-3 pb-3 pt-3.5">
+      <div className="rounded-card border border-line bg-white px-3 pb-3 pt-3.5 shadow-soft">
         {/* 막대는 자기 안에서 좌우로 밀어 본다 — 폭이 좁은 화면에서도 페이지가 옆으로 밀리지 않는다 */}
         <div className="-mx-1 overflow-x-auto px-1 pb-1" tabIndex={-1} style={{ scrollbarWidth: 'thin' }} data-timeline-scroll="">
           <div className="min-w-[35rem]" role="img" aria-label={summary}>
@@ -165,10 +185,10 @@ function TimelineBar({ timeline }: { timeline: Timeline }) {
                   <div
                     key={g.index}
                     className={`absolute inset-y-0 flex flex-col items-center justify-center px-0.5 text-center ${list[g.shade % list.length]}`}
-                    style={{ left: `${g.leftPct}%`, width: `${g.widthPct}%`, boxShadow: i < last ? 'inset -2px 0 0 rgb(var(--surface))' : undefined }}
+                    style={{ left: `${g.leftPct}%`, width: `${g.widthPct}%`, boxShadow: i < last ? 'inset -2px 0 0 #fff' : undefined }}
                   >
                     <span className="text-[0.75rem] font-extrabold leading-tight">{g.head}</span>
-                    {g.sub && <span className="text-[0.625rem] font-semibold leading-tight opacity-90">{g.sub}</span>}
+                    {g.sub && <span className="text-[0.625rem] font-semibold leading-tight">{g.sub}</span>}
                   </div>
                 )
               })}
@@ -211,10 +231,10 @@ function ProgramRowCard({ row, onShowSpots }: { row: ProgramRow; onShowSpots: ()
     <div
       className={`grid grid-cols-[3.75rem_minmax(0,1fr)] gap-x-3 rounded-card border px-3.5 py-3 ${
         brk
-          ? 'border-gold/45 bg-gradient-to-br from-star-soft/80 to-gold-soft/70'
+          ? 'border-gold-200 bg-gradient-to-br from-gold-50 to-[#fffbea]'
           : closing
             ? 'border-dashed border-line bg-transparent'
-            : 'border-line bg-surface/80 shadow-soft'
+            : 'border-line bg-white shadow-soft'
       }`}
     >
       <div className="pt-0.5">
@@ -237,8 +257,8 @@ function ProgramRowCard({ row, onShowSpots }: { row: ProgramRow; onShowSpots: ()
         {row.items && row.items.length > 0 && (
           <ol role="list" className="mt-2 flex flex-wrap gap-1.5">
             {row.items.map((t, i) => (
-              <li key={i} className="inline-flex items-baseline gap-1.5 rounded-2xl border border-line bg-paper/80 px-2.5 py-1 text-[0.8125rem] font-semibold leading-snug text-ink">
-                <span className="font-bold text-navy" aria-hidden="true">
+              <li key={i} className="inline-flex items-baseline gap-1.5 rounded-2xl border border-sky-200 bg-sky-50 px-2.5 py-1 text-[0.8125rem] font-semibold leading-snug text-ink">
+                <span className="font-bold text-primary-hover" aria-hidden="true">
                   {circled(i)}
                 </span>
                 {t}
@@ -260,7 +280,7 @@ function ProgramRowCard({ row, onShowSpots }: { row: ProgramRow; onShowSpots: ()
 
 function ContactCard({ contact }: { contact: NonNullable<Program['contact']> }) {
   return (
-    <section aria-labelledby="ev-contact-h" className="rounded-card border border-navy/20 bg-surface/80 px-4 py-4 shadow-soft">
+    <section aria-labelledby="ev-contact-h" className="rounded-card border border-sky-200 bg-white px-4 py-4 shadow-soft">
       <SectionTitle id="ev-contact-h" eyebrow="Contact" title={contact.title} />
       {contact.phones.length > 0 && (
         <ul role="list" className="grid grid-cols-[repeat(auto-fit,minmax(8.75rem,1fr))] gap-2">
@@ -269,7 +289,7 @@ function ContactCard({ contact }: { contact: NonNullable<Program['contact']> }) 
               <a
                 href={telHref(p)}
                 aria-label={`전화 걸기 ${p}`}
-                className="flex min-h-[3rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-navy/25 bg-surface px-2 text-[0.875rem] font-bold text-navy tnum transition-colors hover:border-navy/55 hover:bg-paper active:scale-[0.98]"
+                className="flex min-h-[3rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-sky-200 bg-sky-50 px-2 text-[0.875rem] font-bold text-navy tnum transition-colors hover:border-primary/45 hover:bg-primary-soft active:scale-[0.98]"
               >
                 <Phone size={15} strokeWidth={2} aria-hidden="true" />
                 {p}

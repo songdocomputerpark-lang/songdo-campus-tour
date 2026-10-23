@@ -13,7 +13,7 @@ import { prefersReducedMotion } from '../lib/env'
 import { useAppStore } from '../store/useAppStore'
 import { estimateTextWidth } from './buildingLabels'
 import { CARD_HEADER_H, CARD_ROW_H, entranceMarkers, entranceTextOffset, entranceTextSide, PIN_R, type CardPlacement, type CardRow, type EntranceMarker, type EvBuilding, type EvPin } from './eventLayout'
-import { flagPath, SPOT_START_FILL, SPOT_STAR_FILL, starPath } from './icons'
+import { flagPath, SPOT_START_EDGE, SPOT_START_FILL, SPOT_START_INK, SPOT_STAR_FILL, starPath } from './icons'
 import { useMapScale } from './MapContext'
 import { useEventModel, useEventPlacement, useEventSelectedBuilding } from './useEventPlacement'
 
@@ -218,9 +218,9 @@ function CardRowView({ r, y, w, active, hover, onHover, last }: { r: CardRow; y:
       <rect className="ev-row-bg" data-on={active || hover} x={4} y={y + 1} width={w - 8} height={CARD_ROW_H - (last ? 1 : 2)} rx={8} />
       {r.start ? (
         <>
-          <rect x={10} y={cy - 10} width={r.badgeW} height={20} rx={10} style={{ fill: SPOT_START_FILL }} />
-          <path d={FLAG_ROW} transform={`translate(${10 + 11} ${cy})`} fill="none" stroke="#fff" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
-          <text x={10 + 19} y={cy + 0.6} dominantBaseline="central" style={{ fontSize: 12, fontWeight: 800, fill: '#fff' }}>
+          <rect x={10} y={cy - 10} width={r.badgeW} height={20} rx={10} style={{ fill: SPOT_START_FILL, stroke: SPOT_START_EDGE, strokeWidth: 1.2 }} />
+          <path d={FLAG_ROW} transform={`translate(${10 + 11} ${cy})`} fill="none" stroke={SPOT_START_INK} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+          <text x={10 + 19} y={cy + 0.6} dominantBaseline="central" style={{ fontSize: 12, fontWeight: 800, fill: SPOT_START_INK }}>
             출발
           </text>
         </>
@@ -260,7 +260,7 @@ function CompactCard({ b, w, h, selected, onHover }: { b: EvBuilding; w: number;
       <rect x={1} y={2.4} width={w} height={h} rx={h / 2} className="ev-card-shadow" />
       <rect className="ev-compact-face" x={0} y={0} width={w} height={h} rx={h / 2} />
       {c.start ? (
-        <path d={FLAG_ROW} transform={`translate(${10 + 5} ${h / 2})`} fill="none" stroke="#fff" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={FLAG_ROW} transform={`translate(${10 + 5} ${h / 2})`} fill="none" stroke={SPOT_START_INK} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
       ) : (
         <path d={STAR_COMPACT} transform={`translate(${10 + 6} ${h / 2 - 0.4})`} style={{ fill: 'rgb(var(--navy))' }} />
       )}
@@ -268,11 +268,11 @@ function CompactCard({ b, w, h, selected, onHover }: { b: EvBuilding; w: number;
         x={c.start ? 10 + 13 : 10 + 14}
         y={h / 2 + 0.6}
         dominantBaseline="central"
-        style={{ fontSize: 12.5, fontWeight: 800, fill: c.start ? '#fff' : 'rgb(var(--navy))' }}
+        style={{ fontSize: 12.5, fontWeight: 800, fill: 'rgb(var(--navy))' }}
       >
         {c.start ? c.head : c.head.replace('★', '')}
       </text>
-      <text x={10 + c.headW + 6} y={h / 2 + 0.6} dominantBaseline="central" style={{ fontSize: 12.5, fontWeight: 750, fill: c.start ? 'rgb(255 255 255 / 0.92)' : 'rgb(var(--ink))' }}>
+      <text x={10 + c.headW + 6} y={h / 2 + 0.6} dominantBaseline="central" style={{ fontSize: 12.5, fontWeight: 750, fill: 'rgb(var(--ink))' }}>
         {c.name}
       </text>
     </g>
@@ -298,12 +298,12 @@ function PinMark({ pin, selected, index, tappable, onPick }: { pin: EvPin; selec
           rx={PIN_R}
           style={{
             fill: start ? SPOT_START_FILL : SPOT_STAR_FILL,
-            stroke: selected ? 'rgb(var(--navy))' : start ? 'rgb(var(--surface))' : 'rgb(var(--surface))',
+            stroke: selected ? 'rgb(var(--navy))' : start ? SPOT_START_EDGE : 'rgb(var(--surface))',
             strokeWidth: selected ? 2.4 : 1.8,
           }}
         />
         {start ? (
-          <path d={FLAG_ROW} transform="translate(0.6 0)" fill="none" stroke="#fff" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={FLAG_ROW} transform="translate(0.6 0)" fill="none" stroke={SPOT_START_INK} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
         ) : (
           <text x={0} y={0.6} textAnchor="middle" dominantBaseline="central" style={{ fontSize: wide ? 11 : 11.5, fontWeight: 800, fill: 'rgb(var(--navy))' }}>
             {pin.text}

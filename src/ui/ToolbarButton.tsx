@@ -26,7 +26,7 @@ export function ToolbarButton({ icon, label, onClick, active, pressed, disabled,
       className={[
         'group relative flex min-h-[3.25rem] min-w-[2.75rem] flex-col items-center justify-center gap-0.5 rounded-2xl px-2 transition-[background-color,color,transform] duration-180 ease-out',
         'lg:min-h-[2.75rem] lg:flex-row lg:gap-2 lg:rounded-full lg:px-4',
-        active ? 'bg-navy text-white shadow-soft' : 'text-ink-soft hover:bg-paper-2 hover:text-navy active:scale-[0.97]',
+        active ? 'bg-primary-soft text-primary-hover shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.2)]' : 'text-ink-soft hover:bg-paper-2 hover:text-navy active:scale-[0.97]',
         disabled ? 'cursor-not-allowed opacity-45' : '',
       ].join(' ')}
     >
@@ -34,7 +34,7 @@ export function ToolbarButton({ icon, label, onClick, active, pressed, disabled,
         {icon}
         {dot && (
           <span
-            className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full ring-2 ${active ? 'ring-navy' : 'ring-surface'} ${dot === 'live' ? 'bg-leaf' : 'bg-gold'}`}
+            className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full ring-2 ${active ? 'ring-primary-soft' : 'ring-surface'} ${dot === 'live' ? 'bg-leaf' : 'bg-gold'}`}
             aria-hidden="true"
           />
         )}

@@ -7,7 +7,7 @@ import { floorLabel, getBuilding } from '../data'
 import type { BuildingId } from '../data/types'
 import { spotAria, useSpots } from '../features/tour/spots'
 import { useAppStore } from '../store/useAppStore'
-import { flagPath, SPOT_START_FILL, SPOT_STAR_FILL, starPath } from './icons'
+import { flagPath, SPOT_START_EDGE, SPOT_START_FILL, SPOT_START_INK, SPOT_STAR_FILL, starPath } from './icons'
 import { layoutPins, pinFull, pinInputFor, PIN_FONT, PIN_POINTER, PIN_ROW_GAP, PIN_ROW_H, type PinLayout, type PinRow } from './spotPins'
 import { useLabelPlacement } from './useLabelPlacement'
 
@@ -50,14 +50,14 @@ function SpotPin({ pin, interactive }: { pin: PinLayout; interactive: boolean })
   const top = -PIN_POINTER - pin.h
   const bottom = pin.rows[pin.rows.length - 1]
   const pointerFill = bottom.kind === 'start' ? SPOT_START_FILL : pin.full ? 'rgb(var(--surface))' : SPOT_STAR_FILL
-  const pointerStroke = bottom.kind === 'start' ? SPOT_START_FILL : 'rgb(var(--star-deep))'
+  const pointerStroke = bottom.kind === 'start' ? SPOT_START_EDGE : 'rgb(var(--star-deep))'
   return (
     <g className="spot-pin" style={{ transform: `translate(${pin.tip[0]}px, ${pin.tip[1]}px) scale(calc(var(--ik, 1) * var(--ui-scale, 1)))` }}>
       {/* 지붕 위 위치 점 + 은은한 파문 */}
       <g pointerEvents="none">
         <circle className="spot-pulse" data-kind={bottom.kind} r={7} />
         <ellipse cx={0} cy={1.5} rx={6} ry={2.4} fill="#0b1220" fillOpacity={0.18} />
-        <circle r={4} style={{ fill: bottom.kind === 'start' ? SPOT_START_FILL : SPOT_STAR_FILL, stroke: 'rgb(var(--surface))', strokeWidth: 1.8 }} />
+        <circle r={4} style={{ fill: bottom.kind === 'start' ? SPOT_START_FILL : SPOT_STAR_FILL, stroke: bottom.kind === 'start' ? SPOT_START_EDGE : 'rgb(var(--surface))', strokeWidth: bottom.kind === 'start' ? 2 : 1.8 }} />
         <path d={`M-5.5 ${-PIN_POINTER - 1}L5.5 ${-PIN_POINTER - 1}L0 -5Z`} style={{ fill: pointerFill, stroke: pointerStroke, strokeWidth: 1.3, strokeLinejoin: 'round' }} />
       </g>
       {pin.rows.map((row, i) => (
@@ -126,11 +126,11 @@ function PinRowShape({
             width={rw}
             height={PIN_ROW_H}
             rx={r}
-            style={{ fill: 'rgb(var(--surface))', stroke: start ? SPOT_START_FILL : 'rgb(var(--star-deep))', strokeWidth: 1.4 }}
+            style={{ fill: 'rgb(var(--surface))', stroke: start ? SPOT_START_EDGE : 'rgb(var(--star-deep))', strokeWidth: 1.4 }}
           />
-          <circle cx={x0 + 5 + 9} cy={cy} r={9} style={{ fill: start ? SPOT_START_FILL : SPOT_STAR_FILL, stroke: start ? 'none' : 'rgb(var(--star-deep) / 0.5)', strokeWidth: 0.8 }} />
+          <circle cx={x0 + 5 + 9} cy={cy} r={9} style={{ fill: start ? SPOT_START_FILL : SPOT_STAR_FILL, stroke: start ? SPOT_START_EDGE : 'rgb(var(--star-deep) / 0.5)', strokeWidth: 0.8 }} />
           {start ? (
-            <path d={FLAG_6} transform={`translate(${x0 + 14.5} ${cy})`} fill="none" stroke="#fff" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" />
+            <path d={FLAG_6} transform={`translate(${x0 + 14.5} ${cy})`} fill="none" stroke={SPOT_START_INK} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" />
           ) : (
             <text x={x0 + 14} y={cy + 0.6} textAnchor="middle" dominantBaseline="central" style={{ fontSize: 11.5, fontWeight: 800, fill: 'rgb(var(--navy))' }}>
               {row.spots[0].no}
@@ -156,10 +156,10 @@ function PinRowShape({
             width={rw}
             height={PIN_ROW_H}
             rx={r}
-            style={{ fill: start ? SPOT_START_FILL : SPOT_STAR_FILL, stroke: start ? 'rgb(var(--surface))' : 'rgb(var(--star-deep))', strokeWidth: start ? 1.6 : 1.2 }}
+            style={{ fill: start ? SPOT_START_FILL : SPOT_STAR_FILL, stroke: start ? SPOT_START_EDGE : 'rgb(var(--star-deep))', strokeWidth: start ? 1.6 : 1.2 }}
           />
           {start ? (
-            <path d={FLAG_6} transform={`translate(${x0 + 9 + 6.5} ${cy})`} fill="none" stroke="#fff" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" />
+            <path d={FLAG_6} transform={`translate(${x0 + 9 + 6.5} ${cy})`} fill="none" stroke={SPOT_START_INK} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" />
           ) : (
             <path d={row.spots.length > 1 ? STAR_7 : STAR_8} transform={`translate(${x0 + 9 + 6.5} ${cy})`} style={{ fill: 'rgb(var(--navy))' }} />
           )}
@@ -167,7 +167,7 @@ function PinRowShape({
             x={x0 + 9 + 13 + (start ? 5 : 4)}
             y={cy + 0.6}
             dominantBaseline="central"
-            style={{ fontSize: start ? PIN_FONT : PIN_FONT + 0.5, fontWeight: 800, letterSpacing: start ? '0.02em' : '0.01em', fill: start ? '#fff' : 'rgb(var(--navy))' }}
+            style={{ fontSize: start ? PIN_FONT : PIN_FONT + 0.5, fontWeight: 800, letterSpacing: start ? '0.02em' : '0.01em', fill: 'rgb(var(--navy))' }}
           >
             {row.text}
           </text>

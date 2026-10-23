@@ -156,7 +156,7 @@ export function BuildingDetail() {
                       {fSpots.length > 0 ? (
                         <span className="mt-0.5 flex flex-wrap gap-1">
                           {fSpots.map((s) => (
-                            <span key={s.roomId} className={`inline-flex items-center gap-1 rounded-full py-px pl-px pr-2 text-[0.75rem] font-bold ${s.no === null ? 'bg-navy text-white' : 'bg-star text-navy'}`}>
+                            <span key={s.roomId} className={`inline-flex items-center gap-1 rounded-full py-px pl-px pr-2 text-[0.75rem] font-bold ${s.no === null ? 'border border-gold-200 bg-gold-50 text-navy' : 'bg-star text-navy'}`}>
                               <SpotMark spot={s} size={16} />
                               {s.label}
                             </span>

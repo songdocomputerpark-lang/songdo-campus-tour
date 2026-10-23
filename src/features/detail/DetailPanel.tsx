@@ -264,10 +264,10 @@ function SpotCallout({ spot }: { spot: Spot }) {
   const startTour = useAppStore((s) => s.startTour)
   const start = spot.no === null
   return (
-    <div className={`mt-4 flex items-center gap-3 rounded-card border p-3 ${start ? 'border-navy/25 bg-navy/[0.05]' : 'border-star-deep/35 bg-star-soft/60'}`}>
-      <SpotMark spot={spot} size={34} />
+    <div className="mt-4 flex items-center gap-3 rounded-card border border-gold-200 bg-gold-50 p-3">
+      <SpotMark spot={spot} size={34} gold />
       <div className="min-w-0 flex-1">
-        <p className={`eyebrow text-[0.6875rem] ${start ? 'text-navy-500' : 'text-gold-deep'}`}>{start ? 'Starting Point · 출발' : `Student Guide · ★${spot.no}`}</p>
+        <p className="eyebrow text-[0.6875rem] text-gold-deep">{start ? 'Starting Point · 출발' : `Student Guide · ★${spot.no}`}</p>
         <p className="truncate text-[0.9375rem] font-bold leading-snug text-ink">{spot.label}</p>
         <p className="text-[0.8125rem] leading-snug text-ink-soft">{start ? '안내 코스가 여기에서 출발합니다.' : '재학생이 이곳에서 직접 안내합니다.'}</p>
       </div>

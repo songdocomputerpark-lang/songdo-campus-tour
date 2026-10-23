@@ -14,6 +14,9 @@ const SUB_SIZE = 11.5
 const LABEL_H = 40
 const STEM = 12
 const STAR = starPath(6.4)
+const LABEL_STAR = starPath(6.2)
+const LABEL_STAR_W = 13 // 이름표 위 줄 앞의 금별 폭
+const LABEL_STAR_GAP = 5
 
 /** 이름표 위 줄 (고정 문구) */
 export const VENUE_LABEL = '설명회 장소'
@@ -22,7 +25,9 @@ export function VenueLayer({ buildingId }: { buildingId: BuildingId }) {
   const b = getBuilding(buildingId)
   if (!b) return null
   const [x, y] = roofPoint(b)
-  const w = Math.ceil(Math.max(estimateTextWidth(VENUE_LABEL, HEAD_SIZE), estimateTextWidth(b.name, SUB_SIZE)) + 34)
+  const headW = Math.ceil(estimateTextWidth(VENUE_LABEL, HEAD_SIZE)) + LABEL_STAR_W + LABEL_STAR_GAP
+  const w = Math.ceil(Math.max(headW, estimateTextWidth(b.name, SUB_SIZE)) + 34)
+  const headX = (w - headW) / 2
   const top = -(PIN_R + STEM + LABEL_H)
   const style: CSSProperties = { transform: `translate(${x}px, ${y}px) scale(${SCALE})` }
   return (
@@ -34,11 +39,13 @@ export function VenueLayer({ buildingId }: { buildingId: BuildingId }) {
       <path d={STAR} style={{ fill: 'rgb(var(--navy))' }} transform="translate(0 -0.3)" />
       <g transform={`translate(${-w / 2} ${top})`}>
         <rect x={1} y={3} width={w} height={LABEL_H} rx={12} className="ev-card-shadow" />
-        <rect x={0} y={0} width={w} height={LABEL_H} rx={12} style={{ fill: 'rgb(var(--navy))', stroke: 'rgb(var(--star))', strokeWidth: 1.4 }} />
-        <text x={w / 2} y={15} textAnchor="middle" dominantBaseline="central" style={{ fontSize: HEAD_SIZE, fontWeight: 800, letterSpacing: '0.01em', fill: 'rgb(var(--star))' }}>
+        {/* 흰 카드 + 금빛 테두리 + 금별 (어두운 덩어리 없이 지도 위에서 또렷하게) */}
+        <rect x={0} y={0} width={w} height={LABEL_H} rx={12} style={{ fill: 'rgb(var(--surface))', stroke: 'rgb(var(--star))', strokeWidth: 1.8 }} />
+        <path d={LABEL_STAR} transform={`translate(${headX + LABEL_STAR_W / 2} 15)`} style={{ fill: 'rgb(var(--star))', stroke: 'rgb(var(--star-deep))', strokeWidth: 0.9, strokeLinejoin: 'round' }} />
+        <text x={headX + LABEL_STAR_W + LABEL_STAR_GAP} y={15} textAnchor="start" dominantBaseline="central" style={{ fontSize: HEAD_SIZE, fontWeight: 800, letterSpacing: '0.01em', fill: 'rgb(var(--gold-deep))' }}>
           {VENUE_LABEL}
         </text>
-        <text x={w / 2} y={30} textAnchor="middle" dominantBaseline="central" style={{ fontSize: SUB_SIZE, fontWeight: 650, fill: 'rgb(255 255 255 / 0.9)' }}>
+        <text x={w / 2} y={30} textAnchor="middle" dominantBaseline="central" style={{ fontSize: SUB_SIZE, fontWeight: 650, fill: 'rgb(var(--navy))' }}>
           {b.name}
         </text>
       </g>

@@ -175,8 +175,8 @@ export function FloorStack({
                   ))}
                   <line x1={x0 + W + sk + 4} y1={cy} x2={x0 + W + sk + 13} y2={cy} stroke="rgb(var(--navy))" strokeWidth={1.4} strokeLinecap="round" />
                   <g transform={`translate(${x0 + W + sk + 13} ${cy})`}>
-                    <rect x={0} y={-m.tagH / 2} width={TAG_W - 16} height={m.tagH} rx={m.tagH / 2} style={{ fill: 'rgb(var(--navy))' }} />
-                    <text x={(TAG_W - 16) / 2} y={0.6} textAnchor="middle" dominantBaseline="central" style={{ fontSize: m.tagFs, fontWeight: 800, fill: '#fff' }}>
+                    <rect x={0} y={-m.tagH / 2} width={TAG_W - 16} height={m.tagH} rx={m.tagH / 2} style={{ fill: 'rgb(var(--gold-50))', stroke: 'rgb(var(--star-deep) / 0.7)', strokeWidth: 1.2 }} />
+                    <text x={(TAG_W - 16) / 2} y={0.6} textAnchor="middle" dominantBaseline="central" style={{ fontSize: m.tagFs, fontWeight: 800, fill: 'rgb(var(--navy))' }}>
                       {tagText}
                     </text>
                   </g>
@@ -193,7 +193,7 @@ export function FloorStack({
   )
 }
 
-/** 슬래브 위 ★번호 표식(금색 알약) / 출발 깃발(남색) */
+/** 슬래브 위 ★번호 표식(금색 알약) / 출발 깃발(흰 바탕 + 금빛 테두리) */
 function Mark({ spot, x, y, small = false, k = 1 }: { spot: Spot; x: number; y: number; small?: boolean; k?: number }) {
   const start = spot.no === null
   const w = small ? 28 : 38
@@ -207,10 +207,10 @@ function Mark({ spot, x, y, small = false, k = 1 }: { spot: Spot; x: number; y: 
         width={w}
         height={h}
         rx={h / 2}
-        style={{ fill: start ? 'rgb(var(--navy))' : 'rgb(var(--star))', stroke: start ? 'rgb(var(--surface))' : 'rgb(var(--star-deep) / 0.7)', strokeWidth: start ? 1.8 : 1.1 }}
+        style={{ fill: start ? 'rgb(var(--surface))' : 'rgb(var(--star))', stroke: 'rgb(var(--star-deep) / 0.7)', strokeWidth: start ? 1.6 : 1.1 }}
       />
       {start ? (
-        <path d={FLAG} transform={`scale(${small ? 0.9 : 1.15}) translate(0.6 0)`} fill="none" stroke="#fff" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={FLAG} transform={`scale(${small ? 0.9 : 1.15}) translate(0.6 0)`} fill="none" stroke="rgb(var(--navy))" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
       ) : (
         <>
           <path d={STAR} transform={`translate(${small ? -6.4 : -8.6} -0.3) scale(${small ? 0.82 : 1.05})`} style={{ fill: 'rgb(var(--navy))' }} />

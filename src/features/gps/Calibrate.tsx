@@ -103,7 +103,7 @@ function Step({ n, title, done, children }: { n: number; title: string; done?: b
   return (
     <li className="relative pl-9">
       <span
-        className={`tnum absolute left-0 top-0 grid h-6 w-6 place-items-center rounded-full text-[0.75rem] font-bold ${done ? 'bg-leaf text-white' : 'bg-navy text-white'}`}
+        className={`tnum absolute left-0 top-0 grid h-6 w-6 place-items-center rounded-full text-[0.75rem] font-bold ${done ? 'bg-leaf text-white' : 'bg-primary text-white'}`}
         aria-hidden="true"
       >
         {done ? <Check size={14} strokeWidth={3} /> : n}
@@ -369,7 +369,7 @@ export default function Calibrate() {
               {recording ? (
                 <div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-paper-3" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(recorder.state.progress * 100)} aria-label="기록 진행률">
-                    <div className="h-full rounded-full bg-navy transition-[width] duration-100 ease-linear" style={{ width: `${recorder.state.progress * 100}%` }} />
+                    <div className="h-full rounded-full bg-primary transition-[width] duration-100 ease-linear" style={{ width: `${recorder.state.progress * 100}%` }} />
                   </div>
                   <p className="tnum mt-2" aria-live="polite">
                     측정 중 · {recorder.state.remainingSec}초 남음 · 표본 {recorder.state.samples}개
@@ -415,7 +415,7 @@ export default function Calibrate() {
                     {entries.map((e, i) => (
                       <li key={`${i}-${e.point.px[0]}-${e.point.px[1]}`} className="rounded-card border border-line bg-surface/70 py-2 pl-2.5 pr-1">
                         <div className="flex items-center gap-2.5">
-                          <span className="tnum grid h-6 w-6 shrink-0 place-items-center rounded-full bg-navy text-[0.75rem] font-bold text-white">{i + 1}</span>
+                          <span className="tnum grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-[0.75rem] font-bold text-white">{i + 1}</span>
                           <div className="min-w-0 flex-1 leading-tight">
                             <p className="tnum text-[0.8125rem] font-semibold text-ink">
                               {Math.round(e.point.px[0])}, {Math.round(e.point.px[1])} px

@@ -1,6 +1,6 @@
 // 층 선택기: 세로 '엘리베이터' 버튼 (데스크톱 좌측 하단 / 모바일 우측 세로 칩). 위층이 위.
 // 활성 표시기는 층 사이를 부드럽게 미끄러진다. 위치는 상위(MapChrome)가 정한다.
-// 학생 안내 장소(★)가 있는 층은 버튼 모서리에 작은 금별(출발 층은 남색 깃발 점)을 단다.
+// 학생 안내 장소(★)가 있는 층은 버튼 모서리에 작은 금별(출발 층은 금테 흰 점)을 단다.
 import { floorLabel, getBuilding, floorsOf } from '../data'
 import { spotFloorKey, useSpots } from '../features/tour/spots'
 import { useAppStore } from '../store/useAppStore'
@@ -26,7 +26,7 @@ export function FloorSelector({ className = '' }: { className?: string }) {
       <div className="glass-surface relative flex flex-col rounded-[1.375rem] p-1 shadow-float">
         <span
           aria-hidden="true"
-          className="absolute left-1 right-1 top-1 rounded-[1.0625rem] bg-navy shadow-soft transition-transform duration-[320ms] ease-out"
+          className="absolute left-1 right-1 top-1 rounded-[1.0625rem] bg-primary shadow-[0_4px_12px_-4px_rgb(var(--primary)/0.55)] transition-transform duration-[320ms] ease-out"
           style={{ height: ROW, transform: `translateY(${activeIdx * ROW}px)` }}
         />
         {list.map((f) => {
@@ -55,7 +55,7 @@ export function FloorSelector({ className = '' }: { className?: string }) {
                 </svg>
               )}
               {start && stars.length === 0 && (
-                <span className={`pointer-events-none absolute right-1 top-1.5 h-2 w-2 rounded-full border ${active ? 'border-navy bg-white' : 'border-surface bg-navy'}`} aria-hidden="true" />
+                <span className={`pointer-events-none absolute right-1 top-1.5 h-2 w-2 rounded-full border ${active ? 'border-white bg-star' : 'border-star-deep bg-white'}`} aria-hidden="true" />
               )}
             </button>
           )

@@ -139,7 +139,7 @@ export function TourBar({ layout, onPeekHeight }: TourBarProps) {
   const info = (
     <div className={isSheet ? '' : 'mt-4'}>
       {(cur.no !== null || cur.start) && (
-        <div className={`mb-3 flex items-center gap-2.5 rounded-card px-3 py-2.5 ${cur.start ? 'bg-navy/[0.06]' : 'bg-star-soft/70'}`}>
+        <div className="mb-3 flex items-center gap-2.5 rounded-card border border-gold-200 bg-gold-50 px-3 py-2.5">
           <SpotMark spot={cur} size={28} />
           <p className="min-w-0 text-[0.875rem] leading-snug text-ink">
             {cur.start ? (
@@ -156,10 +156,10 @@ export function TourBar({ layout, onPeekHeight }: TourBarProps) {
       )}
       <div className="flex flex-wrap gap-1.5">
         <span className="chip">{cur.categoryLabel}</span>
-        {cur.conf === 'medium' && <span className="chip border-gold/50 bg-gold-soft/60 text-gold-deep">명칭 대응 검토 중</span>}
+        {cur.conf === 'medium' && <span className="chip border-gold-200 bg-gold-50 text-gold-deep">명칭 대응 검토 중</span>}
       </div>
       {cur.note ? (
-        <figure className="relative mt-3 rounded-card border border-line bg-paper/60 py-3.5 pl-5 pr-4">
+        <figure className="relative mt-3 rounded-card border border-line bg-white py-3.5 pl-5 pr-4 shadow-soft">
           <span className="absolute bottom-3.5 left-0 top-3.5 w-[3px] rounded-full bg-gold" aria-hidden="true" />
           <figcaption className="eyebrow mb-1 text-gold-deep">About this stop · 안내</figcaption>
           <p className="text-[0.9375rem] leading-relaxed text-ink [text-wrap:pretty]">{cur.note}</p>
@@ -321,14 +321,14 @@ function NavButton({ dir, t, nextStop }: { dir: 'prev' | 'next'; t: TourApi; nex
         onClick={t.prev}
         aria-disabled={t.isFirst}
         aria-label="이전 지점"
-        className={`${common} border border-navy/30 bg-surface/70 text-navy hover:border-navy/55 hover:bg-surface ${t.isFirst ? 'cursor-not-allowed opacity-40' : ''}`}
+        className={`${common} border border-sky-200 bg-white text-navy hover:border-primary/45 hover:bg-sky-50 ${t.isFirst ? 'cursor-not-allowed opacity-40' : ''}`}
       >
         <ChevronLeft size={21} strokeWidth={1.9} />
       </button>
     )
   }
   return t.isLast ? (
-    <button type="button" onClick={t.finish} aria-label="투어 마치기, 자유 탐색으로" className={`${common} bg-navy text-white shadow-[0_6px_16px_-6px_rgb(var(--navy)/0.55)] hover:bg-navy-700`}>
+    <button type="button" onClick={t.finish} aria-label="투어 마치기, 자유 탐색으로" className={`${common} bg-primary text-white shadow-[0_6px_16px_-6px_rgb(var(--primary)/0.5)] hover:bg-primary-hover`}>
       <Check size={21} strokeWidth={2.1} />
     </button>
   ) : (
@@ -336,7 +336,7 @@ function NavButton({ dir, t, nextStop }: { dir: 'prev' | 'next'; t: TourApi; nex
       type="button"
       onClick={t.next}
       aria-label={nextStop ? `다음 지점, ${nextStop.name}` : '다음 지점'}
-      className={`${common} bg-navy text-white shadow-[0_6px_16px_-6px_rgb(var(--navy)/0.55)] hover:bg-navy-700`}
+      className={`${common} bg-primary text-white shadow-[0_6px_16px_-6px_rgb(var(--primary)/0.5)] hover:bg-primary-hover`}
     >
       <ChevronRight size={21} strokeWidth={1.9} />
     </button>
@@ -354,7 +354,7 @@ function AutoplayToggle({ t, compact = false }: { t: TourApi; compact?: boolean 
       title={`자동 진행 — ${TOUR_STEP_MS / 1000}초마다 다음 지점`}
       onClick={t.toggleAutoplay}
       className={`relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[0.8125rem] font-semibold transition-colors duration-180 before:absolute before:-inset-1.5 before:content-[''] ${
-        t.autoplay ? 'border-navy bg-navy text-white' : 'border-navy/30 bg-surface/70 text-navy hover:border-navy/55 hover:bg-surface'
+        t.autoplay ? 'border-primary/40 bg-primary-soft text-primary-hover' : 'border-sky-200 bg-white text-navy hover:border-primary/45 hover:bg-sky-50'
       }`}
     >
       {t.autoplay ? <Pause size={13} fill="currentColor" aria-hidden="true" /> : <Play size={13} fill="currentColor" aria-hidden="true" />}
@@ -372,7 +372,7 @@ function StepDots({ t }: { t: TourApi }) {
     <div className="relative h-7" role="group" aria-label={`투어 진행 — 전체 ${n}곳 중 ${t.index + 1}번째`} data-tour-keys>
       <span className="absolute h-[2px] rounded-full bg-line-strong/70" style={{ left: edge, right: edge, top: 'calc(50% - 1px)' }} aria-hidden="true" />
       <span
-        className="absolute h-[2px] rounded-full bg-navy transition-[width] duration-[420ms] ease-out"
+        className="absolute h-[2px] rounded-full bg-primary transition-[width] duration-[420ms] ease-out"
         style={{ left: edge, width: `${(t.index / n) * 100}%`, top: 'calc(50% - 1px)' }}
         aria-hidden="true"
       />
@@ -395,10 +395,10 @@ function StepDots({ t }: { t: TourApi }) {
                 <span
                   className={`block rounded-full transition-[transform,background-color,border-color,box-shadow] duration-[280ms] ease-out ${
                     isCur
-                      ? 'h-3.5 w-3.5 bg-gold shadow-[0_0_0_2px_rgb(var(--surface)),0_0_0_3.5px_rgb(var(--navy))]'
+                      ? 'h-3.5 w-3.5 bg-gold shadow-[0_0_0_2px_rgb(var(--surface)),0_0_0_3.5px_rgb(var(--primary))]'
                       : passed
-                        ? 'h-2 w-2 bg-navy group-hover:scale-150'
-                        : 'h-2 w-2 border border-line-strong bg-surface group-hover:scale-150 group-hover:border-navy'
+                        ? 'h-2 w-2 bg-primary group-hover:scale-150'
+                        : 'h-2 w-2 border border-line-strong bg-surface group-hover:scale-150 group-hover:border-primary'
                   }`}
                 />
               </button>
@@ -464,14 +464,14 @@ function Controls({ t, nextStop }: { t: TourApi; nextStop: ResolvedStop | null }
 
 function FinishCard({ t }: { t: TourApi }) {
   return (
-    <div className="mt-5 rounded-card bg-navy p-4 text-white shadow-soft">
-      <div className="eyebrow text-gold-soft">Tour complete</div>
+    <div className="mt-5 rounded-card border border-mint-200 bg-gradient-to-br from-mint-50 to-white p-4 text-navy shadow-soft">
+      <div className="eyebrow text-mint-ink">Tour complete</div>
       <p className="mt-1 text-[1rem] font-semibold">추천 투어를 모두 둘러보셨어요</p>
-      <p className="mt-1 text-[0.8125rem] leading-relaxed text-white/80">이제 지도를 자유롭게 탐색해 보세요. 궁금한 곳은 검색으로 바로 찾을 수 있어요.</p>
+      <p className="mt-1 text-[0.8125rem] leading-relaxed text-ink-soft">이제 지도를 자유롭게 탐색해 보세요. 궁금한 곳은 검색으로 바로 찾을 수 있어요.</p>
       <button
         type="button"
         onClick={t.restart}
-        className="mt-3 inline-flex min-h-[2.5rem] items-center gap-1.5 rounded-full border border-white/35 px-4 text-[0.875rem] font-semibold text-white transition-colors hover:bg-white/10"
+        className="mt-3 inline-flex min-h-[2.5rem] items-center gap-1.5 rounded-full border border-mint-200 bg-white px-4 text-[0.875rem] font-semibold text-navy transition-colors hover:bg-mint-50"
       >
         <RotateCcw size={15} aria-hidden="true" /> 처음부터 다시
       </button>
@@ -481,7 +481,7 @@ function FinishCard({ t }: { t: TourApi }) {
 
 function StopList({ t }: { t: TourApi }) {
   return (
-    <details className="group mt-5 overflow-hidden rounded-card border border-line bg-surface/60">
+    <details className="group mt-5 overflow-hidden rounded-card border border-line bg-white shadow-soft">
       <summary className="flex min-h-[2.75rem] cursor-pointer list-none items-center gap-2 px-4 text-[0.875rem] font-semibold text-ink-soft [&::-webkit-details-marker]:hidden">
         <ListOrdered size={16} aria-hidden="true" />
         전체 지점 <span className="tnum font-normal text-ink-mute">{t.total}곳</span>
@@ -496,10 +496,10 @@ function StopList({ t }: { t: TourApi }) {
                 type="button"
                 onClick={() => t.goTo(s.index)}
                 aria-current={isCur ? 'step' : undefined}
-                className={`flex min-h-[2.75rem] w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-paper-2 ${isCur ? 'bg-paper-2/70' : ''}`}
+                className={`flex min-h-[2.75rem] w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-sky-50 ${isCur ? 'bg-primary-soft/60' : ''}`}
               >
                 <span
-                  className={`tnum grid h-6 w-6 shrink-0 place-items-center rounded-full text-[0.75rem] font-bold ${isCur ? 'bg-navy text-white' : 'bg-paper-2 text-ink-soft'}`}
+                  className={`tnum grid h-6 w-6 shrink-0 place-items-center rounded-full text-[0.75rem] font-bold ${isCur ? 'bg-primary text-white' : 'bg-paper-2 text-ink-soft'}`}
                   aria-hidden="true"
                 >
                   {s.index + 1}

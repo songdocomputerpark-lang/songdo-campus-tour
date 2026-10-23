@@ -20,7 +20,7 @@ export interface ConsentSheetProps {
 function Point({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
     <li className="flex gap-3.5">
-      <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-paper-2 text-navy" aria-hidden="true">
+      <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary-hover" aria-hidden="true">
         {icon}
       </span>
       <div className="min-w-0">
@@ -39,7 +39,7 @@ export function ConsentSheet({ open, onAccept, onCancel }: ConsentSheetProps) {
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center" role="presentation">
-      <div className="absolute inset-0 animate-fade-in bg-ink/45" onClick={onCancel} aria-hidden="true" />
+      <div className="absolute inset-0 animate-fade-in bg-navy/25 backdrop-blur-[2px]" onClick={onCancel} aria-hidden="true" />
       <section
         ref={ref}
         role="dialog"
@@ -53,7 +53,7 @@ export function ConsentSheet({ open, onAccept, onCancel }: ConsentSheetProps) {
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line-strong lg:hidden" aria-hidden="true" />
 
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-full bg-navy text-white shadow-soft" aria-hidden="true">
+          <span className="grid h-11 w-11 place-items-center rounded-full border border-sky-200 bg-primary-soft text-primary-hover shadow-soft" aria-hidden="true">
             <LocateFixed size={21} strokeWidth={1.7} />
           </span>
           <div className="eyebrow text-gold-deep">My Location</div>
@@ -77,7 +77,7 @@ export function ConsentSheet({ open, onAccept, onCancel }: ConsentSheetProps) {
           </Point>
         </ul>
 
-        <p className="mt-5 rounded-card bg-paper px-3.5 py-2.5 text-[0.75rem] leading-relaxed text-ink-mute">
+        <p className="mt-5 rounded-card bg-sky-50 px-3.5 py-2.5 text-[0.75rem] leading-relaxed text-ink-mute">
           &lsquo;동의하고 시작&rsquo;을 누르면 브라우저가 위치 권한을 한 번 더 확인합니다. 위치 기준: {geoSourceLabel(geo)}
           <span className="mt-1 block">좌표 대조 자료 © OpenStreetMap contributors (ODbL)</span>
         </p>

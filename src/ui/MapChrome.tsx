@@ -30,7 +30,7 @@ function ToolButton({ icon, label, pressed, onClick, disabled }: { icon: React.R
       title={label}
       disabled={disabled}
       className={`glass-surface flex h-11 items-center justify-center gap-2 rounded-full shadow-float transition-colors duration-180 lg:px-4 w-11 lg:w-auto ${
-        pressed ? '!bg-navy text-white' : 'text-ink-soft hover:text-navy'
+        pressed ? '!bg-primary-soft text-primary-hover ring-1 ring-primary/25' : 'text-ink-soft hover:text-navy'
       } ${disabled ? 'opacity-45' : ''}`}
     >
       {icon}
