@@ -185,7 +185,7 @@
 | `library-2f-p68` | 아우름터 |
 | `library-2f-p69` | 어우름실 |
 | `library-2f-p70` | 인문사회부 |
-| `library-2f-p71` | 창의인성부 |
+| `library-2f-p71` | 창의국제홍보부 |
 
 ### 도서관동 3층
 

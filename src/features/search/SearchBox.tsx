@@ -376,7 +376,7 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
           {trimmed && res.total === 0 && (
             <div className="grid justify-items-center px-6 py-12 text-center">
               <SearchX size={30} strokeWidth={1.5} className="text-ink-mute" aria-hidden="true" />
-              <p className="mt-3 max-w-full break-words text-[0.9375rem] font-semibold text-ink">‘{trimmed}’에 맞는 곳을 찾지 못했어요</p>
+              <p className="mt-3 max-w-full [overflow-wrap:anywhere] text-[0.9375rem] font-semibold text-ink">‘{trimmed}’에 맞는 곳을 찾지 못했어요</p>
               <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-ink-mute">
                 시설 이름의 일부나 초성(ㄷㅅㄱ), 건물 · 층(본관 2층)으로 다시 찾아보세요.
               </p>

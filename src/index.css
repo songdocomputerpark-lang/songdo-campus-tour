@@ -93,6 +93,9 @@ html {
     font-weight: 400;
     line-height: 1.55;
     letter-spacing: -0.005em;
+    /* 한글은 단어(띄어쓰기) 단위로 줄을 바꾼다. 한 단어가 칸보다 길 때만 단어 안에서 끊는다 */
+    word-break: keep-all;
+    overflow-wrap: break-word;
     overflow: hidden;
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
