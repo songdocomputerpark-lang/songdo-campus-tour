@@ -70,7 +70,7 @@ describe('라벨 레이아웃', () => {
   })
   it('splitLines: 합성어는 뜻 단위(LABEL_BREAKS)에서만, 단어 중간에서는 끊지 않는다', () => {
     expect(splitLines('창의국제홍보부', 2)).toEqual(['창의국제', '홍보부'])
-    expect(splitLines('창의국제홍보부', 3)).toEqual(['창의', '국제', '홍보부'])
+    expect(splitLines('창의국제홍보부', 3).length).toBeLessThan(3) // 학교 요청: 창의국제 / 홍보부 두 줄까지만
     expect(splitLines('인문사회부', 2)).toEqual(['인문', '사회부'])
     expect(splitLines('생활안전부', 2)).toEqual(['생활', '안전부'])
     expect(splitLines('교육과정지원부', 2)).toEqual(['교육과정', '지원부'])
@@ -117,11 +117,10 @@ describe('라벨 레이아웃', () => {
       if (!vertical && l.lines.length > 1) for (const s of l.lines) expect(Array.from(s.replace(/[()]/g, '')).length, `${room.id} "${s}"`).toBeGreaterThan(1)
     }
   })
-  it('부서 이름표가 휴대폰 첫 화면에서 숨지 않을 만큼 크다 (화면 글자 8.5px 미만이면 숨김)', () => {
+  it('부서 이름표: 창의국제홍보부는 두 줄, 좁고 긴 방은 휴대폰 첫 화면에서도 보인다 (화면 글자 8.5px 미만이면 숨김)', () => {
     const at = (id: string) => layoutLabel(allRooms.find((r) => r.room.id === id)!.room)
-    // 도서관동 2층: 창의국제홍보부는 같은 크기 방인 인문사회부와 같은 글자 크기 — 360px 폰 첫 화면(k≈0.3)에서도 보인다
-    expect(at('library-2f-p71').lines).toEqual(['창의', '국제', '홍보부'])
-    expect(at('library-2f-p71').fs).toBeCloseTo(at('library-2f-p70').fs)
+    // 도서관동 2층: 학교 요청으로 '창의국제 / 홍보부' 두 줄 — 360px 폰 첫 화면(k≈0.3)에서는 숨고, 372px 이상이거나 조금 확대하면 보인다
+    expect(at('library-2f-p71').lines).toEqual(['창의국제', '홍보부'])
     // 신관동 1층의 좁고 긴 방(진로진학상담부, 샤워실·탈의실): 폰 첫 화면 k=0.5 에서 8.5px 이상
     for (const id of ['new-1f-p31', 'new-1f-p33']) expect(at(id).fs * 0.5, id).toBeGreaterThanOrEqual(8.5)
   })

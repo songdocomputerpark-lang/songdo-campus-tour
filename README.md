@@ -230,6 +230,6 @@ campus-tour/
 ### 개발 메모
 
 - 데이터 무결성 테스트(`tests/data.test.ts`)는 26개 층 · 139개 시설 · id 유일성, 모든 방 좌표가 층 크기 안에 있는지, `facilities.json`·`tour.json` 의 모든 키가 `floors.json` 에 존재하는지를 검사합니다. 데이터 파일(`src/data/*.json`)을 고치면 `npm test` 로 확인하세요.
-- 방 이름을 바꿀 때는 `src/data/floors.json` 과 `public/content/facilities.json` 의 `name` 을 함께 고칩니다. 지도 이름표는 띄어쓰기 · 여는 괄호 앞 · 가운뎃점(·) 뒤에서만 줄을 바꾸고, 띄어쓰기 없는 긴 이름은 `src/map/roomLayout.ts` 의 `LABEL_BREAKS` 에 적은 뜻 단위(예: 창의│국제│홍보부)로만 나눕니다 — 단어 중간이나 한 글자만 떨어지는 줄바꿈은 하지 않습니다. 새 이름이 띄어쓰기 없이 길면 `LABEL_BREAKS` 에도 적으세요(`tests/geometry.test.ts` 가 검사합니다).
+- 방 이름을 바꿀 때는 `src/data/floors.json` 과 `public/content/facilities.json` 의 `name` 을 함께 고칩니다. 지도 이름표는 띄어쓰기 · 여는 괄호 앞 · 가운뎃점(·) 뒤에서만 줄을 바꾸고, 띄어쓰기 없는 긴 이름은 `src/map/roomLayout.ts` 의 `LABEL_BREAKS` 에 적은 뜻 단위(예: 창의국제│홍보부)로만 나눕니다 — 단어 중간이나 한 글자만 떨어지는 줄바꿈은 하지 않습니다. 새 이름이 띄어쓰기 없이 길면 `LABEL_BREAKS` 에도 적으세요(`tests/geometry.test.ts` 가 검사합니다).
 - 라이트박스는 `React.lazy` 로 분리되어 있고, 처음 화면의 JS 는 약 130 KB(gzip) 입니다.
 - 모션은 CSS/rAF 만 사용하며 `prefers-reduced-motion` 을 존중합니다. 사진 자동 넘김은 그 설정에서 꺼지고, 투어 자동 진행은 기본이 꺼짐이며 사용자가 직접 켜야 합니다.
