@@ -123,13 +123,25 @@ export function MapChrome({ isDesktop, rightShift, bottomLift, compactControls }
         </div>
       )}
 
-      {/* 축척 (캠퍼스 화면). 폰의 안내 모드(#/event)에서는 카드·핀과 겹치므로 숨긴다 */}
+      {/* 축척 (캠퍼스 화면) + 방위·축척을 대조한 OpenStreetMap 출처(ODbL). 폰의 안내 모드(#/event)에서는 카드·핀과 겹치므로 숨긴다.
+          래퍼는 포인터를 지도로 통과시키고(링크만 받음), 모바일 시트가 올라가 있으면 출처 줄을 빼서 축척 숫자가 상단 바 밑으로 밀리지 않게 한다.
+          (안내 패널의 맨 아래 주석에도 같은 출처가 있다 — EventPanel) */}
       {view === 'campus' && !(eventActive && narrow) && (
         <div
-          className="absolute z-10"
+          className="pointer-events-none absolute z-10"
           style={isDesktop ? { left: '1.5rem', bottom: '1.75rem' } : { left: '1rem', bottom: bottomLift + 14, transition: 'bottom 380ms var(--ease-out)' }}
         >
           <ScaleBar api={campusApi} metersPerPx={campus.geo.metersPerPx} />
+          {!compactControls && (
+            <a
+              href="https://www.openstreetmap.org/copyright"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="pointer-events-auto mt-1.5 block text-[0.625rem] leading-none text-ink-mute underline-offset-2 hover:text-ink-soft hover:underline"
+            >
+              © OpenStreetMap contributors
+            </a>
+          )}
         </div>
       )}
 

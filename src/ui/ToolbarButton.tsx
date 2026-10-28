@@ -1,4 +1,4 @@
-// 하단 툴바 버튼 (모바일: 아이콘 위 / 라벨 아래 4열, 데스크톱: 가로 알약). GpsControls 등에서 재사용.
+// 하단 툴바 버튼 (모바일: 아이콘 위 / 라벨 아래, 데스크톱: 가로 알약).
 import type { ReactNode } from 'react'
 
 export interface ToolbarButtonProps {
@@ -11,11 +11,9 @@ export interface ToolbarButtonProps {
   pressed?: boolean
   disabled?: boolean
   title?: string
-  /** 작은 상태 점(예: GPS 추적 중) */
-  dot?: 'live' | 'warn' | null
 }
 
-export function ToolbarButton({ icon, label, onClick, active, pressed, disabled, title, dot }: ToolbarButtonProps) {
+export function ToolbarButton({ icon, label, onClick, active, pressed, disabled, title }: ToolbarButtonProps) {
   return (
     <button
       type="button"
@@ -30,15 +28,7 @@ export function ToolbarButton({ icon, label, onClick, active, pressed, disabled,
         disabled ? 'cursor-not-allowed opacity-45' : '',
       ].join(' ')}
     >
-      <span className="relative grid h-6 w-6 place-items-center">
-        {icon}
-        {dot && (
-          <span
-            className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full ring-2 ${active ? 'ring-primary-soft' : 'ring-surface'} ${dot === 'live' ? 'bg-leaf' : 'bg-gold'}`}
-            aria-hidden="true"
-          />
-        )}
-      </span>
+      <span className="relative grid h-6 w-6 place-items-center">{icon}</span>
       <span className="text-[0.6875rem] font-semibold leading-none tracking-tight lg:text-[0.8125rem]">{label}</span>
     </button>
   )

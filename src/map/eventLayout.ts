@@ -108,7 +108,7 @@ export interface EvBuilding {
   side: Side
   full: { w: number; h: number }
   compact: { w: number; h: number; head: string; name: string; start: boolean; headW: number }
-  /** site.entrances 에 있으면 그 지점(월드) — GPS 직선 안내의 도착점 */
+  /** site.entrances 에 있으면 그 지점(월드) */
   entrance: Pt | null
   firstIndex: number
 }
@@ -534,12 +534,4 @@ export function entranceMarkers(model: EvModel): EntranceMarker[] {
     out.push({ buildingId: b.id, name: en.name, at: en.at, angle: inwardAngle(b.poly, en.at) })
   }
   return out
-}
-
-/** GPS 직선 안내의 도착점: 건물 출입구를 알면 그곳, 아니면 건물 중심 */
-export function spotTargetPx(buildingId: BuildingId): Pt | null {
-  const en = site.entrances.find((e) => e.building === buildingId)
-  if (en) return en.at
-  const b = buildings.find((x) => x.id === buildingId)
-  return b ? b.center : null
 }

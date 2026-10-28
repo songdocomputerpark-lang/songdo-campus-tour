@@ -1,20 +1,8 @@
-// 입학설명회 안내: tour.json 파싱 · 방위/직선 문구 · 번호 표기 · 건물별 묶음 · 카드 배치(충돌·접기) · 핀 · 출입구
+// 입학설명회 안내: tour.json 파싱 · 번호 표기 · 건물별 묶음 · 카드 배치(충돌·접기) · 핀 · 출입구
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { buildings } from '../src/data'
-import {
-  bearingDeg,
-  compassKo,
-  eventLegend,
-  formatSpotNos,
-  groupStarsByBuilding,
-  officialName,
-  siblingsOf,
-  spotByNo,
-  stepSpot,
-  straightDistanceText,
-  straightLineText,
-} from '../src/features/event/eventModel'
+import { eventLegend, formatSpotNos, groupStarsByBuilding, officialName, siblingsOf, spotByNo, stepSpot } from '../src/features/event/eventModel'
 import { buildSpots } from '../src/features/tour/spots'
 import { DEFAULT_EVENT_TITLE, parseEvent, sanitizeTour } from '../src/lib/content'
 import {
@@ -122,43 +110,6 @@ describe('장소 번호 · 순서 · 묶음', () => {
     expect(eventLegend('체육관에서 출발합니다.')).toBe('★ 표시 장소')
     expect(eventLegend('')).toBe('★ 표시 장소')
     expect(eventLegend(undefined)).toBe('★ 표시 장소')
-  })
-})
-
-describe('GPS 직선 안내: 8방위 · 방위각 · 문구', () => {
-  it('8방위 한국어', () => {
-    const cases: [number, string][] = [
-      [0, '북쪽'],
-      [44, '북동쪽'],
-      [90, '동쪽'],
-      [135, '남동쪽'],
-      [180, '남쪽'],
-      [225, '남서쪽'],
-      [270, '서쪽'],
-      [315, '북서쪽'],
-      [337, '북서쪽'],
-      [338, '북쪽'],
-      [360, '북쪽'],
-      [-45, '북서쪽'],
-      [725, '북쪽'],
-    ]
-    for (const [deg, ko] of cases) expect(compassKo(deg), `${deg}°`).toBe(ko)
-  })
-  it('방위각: 정북·정동·정남·정서', () => {
-    const o = { lat: 37.43, lon: 126.64 }
-    expect(bearingDeg(o, { lat: o.lat + 0.001, lon: o.lon })).toBeCloseTo(0, 0)
-    expect(bearingDeg(o, { lat: o.lat, lon: o.lon + 0.001 })).toBeCloseTo(90, 0)
-    expect(bearingDeg(o, { lat: o.lat - 0.001, lon: o.lon })).toBeCloseTo(180, 0)
-    expect(bearingDeg(o, { lat: o.lat, lon: o.lon - 0.001 })).toBeCloseTo(270, 0)
-    expect(bearingDeg(o, { lat: o.lat + 0.001, lon: o.lon - 0.001 })).toBeGreaterThan(300) // 북서쪽
-  })
-  it('직선거리 반올림 · 문구', () => {
-    expect(straightDistanceText(3)).toBe('약 5 m')
-    expect(straightDistanceText(47)).toBe('약 45 m')
-    expect(straightDistanceText(123)).toBe('약 120 m')
-    expect(straightDistanceText(999)).toBe('약 1.0 km')
-    expect(straightDistanceText(1500)).toBe('약 1.5 km')
-    expect(straightLineText(123, 315)).toBe('현재 위치에서 직선 약 120 m · 북서쪽')
   })
 })
 

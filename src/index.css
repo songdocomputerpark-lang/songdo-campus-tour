@@ -463,18 +463,6 @@ html {
   }
 }
 
-/* GPS 펄스 (features/gps 가 사용 가능) */
-@keyframes gps-pulse {
-  0% {
-    transform: scale(0.6);
-    opacity: 0.55;
-  }
-  100% {
-    transform: scale(2.4);
-    opacity: 0;
-  }
-}
-
 /* 라벨 등장 */
 .bld-label {
   transition: opacity 240ms ease;
@@ -754,27 +742,6 @@ html {
   stroke: rgb(var(--surface));
   stroke-width: 3.5px;
   stroke-linejoin: round;
-}
-
-/* GPS: 내 위치 → 안내 장소 직선 (경로가 아니다) */
-.ev-gps-line-halo {
-  stroke: rgb(var(--surface));
-  stroke-opacity: 0.85;
-  stroke-width: 6px;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-.ev-gps-line {
-  stroke: rgb(var(--leaf));
-  stroke-width: 2.6px;
-  stroke-dasharray: 8 7;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-.ev-gps-end {
-  fill: rgb(var(--surface));
-  stroke: rgb(var(--leaf));
-  stroke-width: 2.4px;
 }
 
 /* 층 평면도: 안내 장소 방의 비콘(부드러운 파문) */

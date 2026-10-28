@@ -4,7 +4,6 @@
 //  · 출입구(site.entrances) 화살표, 처음 들어올 때 카드가 차례로 나타나는 연출(≤ 900ms, 모션 최소화 설정이면 없음).
 //  · 접근성: 이 레이어는 aria-hidden — 접근 가능한 경로는 패널의 목록(EventPanel)이다. 마우스·터치로 카드를 눌러 선택할 수는 있다.
 import { memo, useEffect, useMemo, useState, type CSSProperties } from 'react'
-import { EventGpsLine } from '../features/event/EventGpsLine'
 import { spotByNo } from '../features/event/eventModel'
 import { useEventUi } from '../features/event/eventUi'
 import { useSpots } from '../features/tour/spots'
@@ -56,8 +55,6 @@ export function EventLayer({ interactive }: { interactive: boolean }) {
       {entrances.map((en) => (
         <EntranceArrow key={en.name} en={en} textSide={k >= 0.9 || en.buildingId === selectedB ? entranceTextSide(en, placement) : 0} selected={en.buildingId === selectedB} />
       ))}
-
-      <EventGpsLine />
 
       {/* 같은 건물 안 다른 핀과 대표 핀을 잇는 가는 점선(지붕 위) */}
       {model.buildings.map((b) =>

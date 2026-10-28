@@ -3,12 +3,11 @@
 //  모바일(<1024): 얇은 상단 바(엠블럼·브레드크럼·검색) · 하단 툴바(안전영역) · 하단 시트(peek/half/full 드래그 스냅)
 //  패널 슬롯 내용 우선순위: 투어(TourBar) > 시설(DetailPanel) > 건물 상세(BuildingDetail) > 층 목록(FloorList)
 //  지도 카메라는 Shell 이 계산한 insets(패널·툴바가 가리는 여백)를 받아 보이는 영역 중앙에 맞춘다.
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AboutModal } from '../features/about/AboutModal'
 import { BuildingDetail } from '../features/detail/BuildingDetail'
 import { DetailPanel } from '../features/detail/DetailPanel'
 import { EventPanel } from '../features/event/EventPanel'
-import { GpsControls } from '../features/gps/GpsControls'
 import { SearchBox } from '../features/search/SearchBox'
 import { TourBar } from '../features/tour/TourBar'
 import { remPx } from '../lib/env'
@@ -28,20 +27,7 @@ import { ToastHost } from './Toast'
 import { Toolbar } from './Toolbar'
 import { useIsDesktop, useIsNarrow } from './useMedia'
 
-const Calibrate = lazy(() => import('../features/gps/Calibrate'))
-
 export function Shell() {
-  const screen = useAppStore((s) => s.screen)
-  if (screen === 'calibrate') {
-    return (
-      <>
-        <Suspense fallback={<div className="fixed inset-0 grid place-items-center bg-paper text-ink-mute">보정 화면을 불러오는 중…</div>}>
-          <Calibrate />
-        </Suspense>
-        <ToastHost />
-      </>
-    )
-  }
   return <MapShell />
 }
 
@@ -119,7 +105,7 @@ function MapShell() {
       const t = e.target as HTMLElement | null
       const typing = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
       const st = useAppStore.getState()
-      const modalOpen = st.search.open || st.ui.aboutOpen || st.gps.status === 'consent' || st.ui.intro
+      const modalOpen = st.search.open || st.ui.aboutOpen || st.ui.intro
       if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
         openSearch()
@@ -246,14 +232,6 @@ function MapShell() {
           <SearchBox variant="icon" />
         </header>
       )}
-
-      {/* GPS 상태 칩 슬롯 — 래퍼는 포인터를 막지 않는다(자식이 pointer-events-auto 를 지정) */}
-      <div
-        className="pointer-events-none absolute left-1/2 z-20 flex -translate-x-1/2 justify-center"
-        style={{ top: isDesktop ? '5.5rem' : 'calc(var(--safe-top) + 3.75rem)', width: 'min(34rem, calc(100vw - 8rem))' }}
-      >
-        <GpsControls variant="status" />
-      </div>
 
       <FirstUseHint isDesktop={isDesktop} />
 

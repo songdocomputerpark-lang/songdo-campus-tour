@@ -1,7 +1,6 @@
-// 하단 툴바: [전체 지도] [설명회 안내] [내 위치]  (투어 진행 중에는 "투어 종료")
+// 하단 툴바: [전체 지도] [설명회 안내]  (투어 진행 중에는 "투어 종료")
 //  데스크톱: 하단 중앙 떠 있는 알약 / 모바일: 하단 고정 바(안전영역 고려, 터치 타깃 ≥ 44px)
 import { Map as MapIcon, Star } from 'lucide-react'
-import { GpsControls } from '../features/gps/GpsControls'
 import { useAppStore } from '../store/useAppStore'
 import { ToolbarButton } from './ToolbarButton'
 
@@ -21,9 +20,9 @@ export function Toolbar() {
       id="app-toolbar"
       aria-label="주요 메뉴"
       className={[
-        'glass-surface fixed z-40 grid grid-cols-3 items-stretch gap-1 px-2 pt-1.5',
+        'glass-surface fixed z-40 grid grid-cols-2 items-stretch gap-1 px-2 pt-1.5',
         'inset-x-0 bottom-0 border-x-0 border-b-0 shadow-[0_-6px_24px_-10px_rgb(17_24_39/0.18)]',
-        'lg:inset-x-auto lg:bottom-6 lg:left-1/2 lg:-translate-x-1/2 lg:grid-cols-[repeat(3,auto)] lg:rounded-full lg:border lg:p-1.5 lg:shadow-panel',
+        'lg:inset-x-auto lg:bottom-6 lg:left-1/2 lg:-translate-x-1/2 lg:grid-cols-[repeat(2,auto)] lg:rounded-full lg:border lg:p-1.5 lg:shadow-panel',
       ].join(' ')}
       style={{ paddingBottom: 'max(var(--safe-bottom), 0.375rem)' }}
     >
@@ -35,7 +34,6 @@ export function Toolbar() {
         pressed={tourActive || (eventActive && view === 'campus')}
         onClick={() => (tourActive ? endTour() : openEvent(null))}
       />
-      <GpsControls variant="toolbar" />
     </nav>
   )
 }

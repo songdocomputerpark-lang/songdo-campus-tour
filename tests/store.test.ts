@@ -203,17 +203,13 @@ describe('투어', () => {
 })
 
 describe('기타 상태', () => {
-  it('검색/정보/GPS/인셋', () => {
+  it('검색/정보/인셋', () => {
     S().openSearch()
     expect(S().search.open).toBe(true)
     S().openAbout()
     expect(S().ui.aboutOpen).toBe(true)
     expect(S().search.open).toBe(false)
     S().closeAbout()
-    S().setGps({ status: 'tracking', fix: { lat: 1, lon: 2, accuracy: 5, heading: null, speed: null, timestamp: 0 } })
-    expect(S().gps.status).toBe('tracking')
-    S().resetGps()
-    expect(S().gps.fix).toBeNull()
     const before = S().insets
     S().setInsets({ top: 1, right: 2, bottom: 3, left: 4 })
     expect(S().insets).toEqual({ top: 1, right: 2, bottom: 3, left: 4 })
@@ -337,43 +333,16 @@ describe('입학설명회 안내(event)', () => {
     expect(S().event.active).toBe(false)
   })
 
-  it('탭: #/event 는 기본(null → 식순), setEventTab 은 #/event/program · #/event/spots 로 쓰인다', () => {
+  it('전체 안내의 주소는 항상 #/event (식순 탭이 없어 탭 주소를 쓰지 않는다)', () => {
     S().openEvent()
-    expect(S().eventTab).toBeNull()
     expect(routeFromState(S())).toEqual({ kind: 'event', spot: null })
-    S().setEventTab('spots')
-    expect(S().event).toEqual({ active: true, spotNo: null })
-    expect(S().eventTab).toBe('spots')
-    expect(routeFromState(S())).toEqual({ kind: 'event', spot: null, tab: 'spots' })
-    S().setEventTab('program')
-    expect(routeFromState(S())).toEqual({ kind: 'event', spot: null, tab: 'program' })
-  })
-
-  it('탭: 장소 상세로 갔다가 전체 안내로 돌아오면 보던 탭 그대로 · 새로 들어오면 기본으로', () => {
-    S().openEvent(null, 'spots')
-    expect(S().eventTab).toBe('spots')
-    S().openEvent(2) // 장소 상세 — 탭은 그대로 두되 주소에는 쓰지 않는다
-    expect(S().eventTab).toBe('spots')
+    S().openEvent(2)
     expect(routeFromState(S())).toEqual({ kind: 'event', spot: 2 })
     S().openEvent(null)
-    expect(routeFromState(S())).toEqual({ kind: 'event', spot: null, tab: 'spots' })
-    S().goCampus()
-    S().openEvent() // 새로 들어오면 기본 탭
-    expect(S().eventTab).toBeNull()
     expect(routeFromState(S())).toEqual({ kind: 'event', spot: null })
   })
 
-  it('탭: 평면도를 다녀와도(안내 모드 유지) 탭이 유지된다', () => {
-    S().openEvent(null, 'program')
-    S().openEvent(2)
-    S().eventShowFloor(2)
-    S().exitFloor()
-    expect(S().event).toEqual({ active: true, spotNo: 2 })
-    S().openEvent(null)
-    expect(S().eventTab).toBe('program')
-  })
-
-  describe('주소 정리: 없는 장소 번호만 #/event 로 교체한다 (탭 주소는 건드리지 않는다)', () => {
+  describe('주소 정리: 없는 장소 번호만 #/event 로 교체한다', () => {
     const replaceState = vi.fn()
     const useHash = (hash: string) => {
       vi.stubGlobal('location', { hash })
@@ -382,7 +351,7 @@ describe('입학설명회 안내(event)', () => {
     beforeEach(() => replaceState.mockClear())
     afterEach(() => vi.unstubAllGlobals())
 
-    it('#/event/99 는 교체, #/event/program · #/event/spots 는 그대로', () => {
+    it('#/event/99 는 교체, 번호가 아닌 예전 탭 주소(#/event/program · #/event/spots)는 여기서 건드리지 않는다', () => {
       for (const [hash, replaced] of [['#/event/99', true], ['#/event/program', false], ['#/event/spots', false], ['#/event/spots/', false]] as const) {
         replaceState.mockClear()
         useHash(hash)
@@ -395,12 +364,11 @@ describe('입학설명회 안내(event)', () => {
       }
     })
 
-    it('탭이 있는 전체 안내(spotNo = null)에서는 아무 일도 하지 않는다', () => {
-      useHash('#/event/spots')
-      S().openEvent(null, 'spots')
+    it('전체 안내(spotNo = null)에서는 아무 일도 하지 않는다', () => {
+      useHash('#/event')
+      S().openEvent(null)
       dropUnknownEventSpot()
       expect(S().event).toEqual({ active: true, spotNo: null })
-      expect(S().eventTab).toBe('spots')
       expect(replaceState).not.toHaveBeenCalled()
     })
   })

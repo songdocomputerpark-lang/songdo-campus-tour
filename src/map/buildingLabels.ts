@@ -6,7 +6,6 @@
 //  · 기본 방향(LABEL_SIDE)이 겹치면 반대쪽 → 나머지 두 방향 순으로 시도, 모두 겹치면 숨긴다
 //  · 사각형은 '월드×k' 좌표계(= 화면 좌표에서 이동량을 뺀 값)로 비교한다 — 이동(pan)은 모든 이름표를 똑같이 옮기므로
 //    충돌 결과는 배율과 화면 폭에만 달린다. 배율은 5% 단위로 양자화하므로(placeLabels) 줌 중에도 재계산이 가볍다.
-//  · GPS 의 "추정 위치 ±N m" 글자는 이름표보다 낮은 우선순위로, 겹치면 생략한다 (gpsLabelClear).
 import { aboveGroundCount, buildings } from '../data'
 import type { Building, BuildingId, Pt } from '../data/types'
 import { polygonArea, translatePoly } from '../lib/geometry'
@@ -222,17 +221,4 @@ export function estimateTextWidth(text: string, fontSize: number): number {
   let w = 0
   for (const ch of text) w += /[ᄀ-ᇿ㄰-㆏가-힯一-鿿]/.test(ch) ? 1.02 : 0.56
   return w * fontSize
-}
-
-/**
- * GPS 점(월드 좌표 x, y) 아래에 놓일 글자가 보이는 이름표와 겹치지 않는가.
- * 글자는 점 중심에서 아래로 18~35 단위(화면고정 마커 좌표) 구간, 폭은 글자 폭 + 외곽선.
- */
-export function gpsLabelClear(p: LabelPlacement, x: number, y: number, text: string, fontSize = 12): boolean {
-  const us = p.uiScale
-  const cx = x * p.k
-  const cy = y * p.k
-  const hw = (estimateTextWidth(text, fontSize) / 2 + 4) * us
-  const r: Rect = { x0: cx - hw, y0: cy + 17 * us, x1: cx + hw, y1: cy + 36 * us }
-  return Object.values(p.items).every((it) => !it.visible || !overlaps(it.rect, r, PAD - 1))
 }

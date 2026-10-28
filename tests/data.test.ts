@@ -117,9 +117,9 @@ describe('public/content', () => {
     }
   })
 
-  it('geo-calibration.json 형식', () => {
-    const c = readJson('public/content/geo-calibration.json')
-    expect('calibration' in c).toBe(true)
+  it('식순(program.json)·위치 보정(geo-calibration.json) 파일은 더 이상 싣지 않는다', () => {
+    expect(existsSync(join(ROOT, 'public/content/program.json'))).toBe(false)
+    expect(existsSync(join(ROOT, 'public/content/geo-calibration.json'))).toBe(false)
   })
 
   it('엠블럼 SVG 존재', () => {

@@ -1,8 +1,7 @@
 // 첫 사용 안내 칩 (캠퍼스 배치도 화면): "건물을 누르면 층별 시설을 둘러볼 수 있어요"
 //  · 사용자가 처음 건물을 고를 때까지(또는 칩의 닫기를 누를 때까지) 보이고, 그 뒤로는 세션 동안 다시 나타나지 않는다(sessionStorage).
-//  · 투어 중 · 위치 보정 화면 · 인트로가 떠 있는 동안에는 숨긴다.
+//  · 투어 중 · 인트로가 떠 있는 동안에는 숨긴다.
 //  · 위치: 모바일 = 상단 바 바로 아래 중앙 / 데스크톱 = 하단 툴바 위 중앙.
-//    모바일에서는 같은 자리를 쓰는 GPS 상태 칩이 떠 있는 동안 비켜 준다.
 //  · 모션: 서서히 나타나고(fade-up) 아이콘이 부드럽게 눌렸다 떼어진다. '동작 줄이기' 설정이면 정지 상태로 보여 준다.
 import { MousePointerClick, Pointer, X } from 'lucide-react'
 import { useEffect, useSyncExternalStore } from 'react'
@@ -45,20 +44,18 @@ function useHintSeen(): boolean {
 
 export function FirstUseHint({ isDesktop }: { isDesktop: boolean }) {
   const hintSeen = useHintSeen()
-  const screen = useAppStore((s) => s.screen)
   const view = useAppStore((s) => s.view)
   const buildingId = useAppStore((s) => s.buildingId)
   const tourActive = useAppStore((s) => s.tour.active)
   const eventActive = useAppStore((s) => s.event.active)
   const introOpen = useAppStore((s) => s.ui.intro)
-  const gpsWatching = useAppStore((s) => ['requesting', 'tracking', 'timeout', 'error'].includes(s.gps.status))
 
   // 건물을 처음 고르면(딥링크·투어로 건물이 열린 경우 포함) 안내는 더 이상 필요 없다
   useEffect(() => {
     if (buildingId) markSeen()
   }, [buildingId])
 
-  const show = !hintSeen && screen === 'map' && view === 'campus' && !buildingId && !tourActive && !eventActive && !introOpen && (isDesktop || !gpsWatching)
+  const show = !hintSeen && view === 'campus' && !buildingId && !tourActive && !eventActive && !introOpen
   if (!show) return null
 
   return (

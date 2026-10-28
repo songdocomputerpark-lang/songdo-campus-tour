@@ -1,8 +1,7 @@
-// 런타임 콘텐츠 로더: public/content/{facilities,photos,tour,program,geo-calibration}.json 을 fetch + 캐시.
+// 런타임 콘텐츠 로더: public/content/{facilities,photos,tour}.json 을 fetch + 캐시.
 // 실패(404·파싱 오류·오프라인)해도 빈 값으로 동작한다 (SPEC §3). 외부 서버 없음 — 같은 출처의 정적 파일만.
 import { create } from 'zustand'
-import type { Calibration, FacilityMap, PhotoItem, PhotoMap, Program, ProgramContact, ProgramInfo, ProgramKind, ProgramNote, ProgramRow, Tour, TourEvent } from '../data/types'
-import { parseHm } from './clock'
+import type { FacilityMap, PhotoItem, PhotoMap, Tour, TourEvent } from '../data/types'
 
 /** public/ 기준 상대경로 → 현재 배포 위치 기준 URL (base './' 이므로 어느 하위 경로에서도 동작) */
 export function assetUrl(path: string): string {
@@ -18,10 +17,6 @@ export interface ContentState {
   facilities: FacilityMap
   photos: PhotoMap
   tour: Tour
-  /** public/content/program.json 의 식순 (없거나 쓸 수 없으면 null → '식순' 탭을 숨긴다) */
-  program: Program | null
-  /** public/content/geo-calibration.json 의 calibration (없으면 null) */
-  calibration: Calibration | null
   load: () => Promise<void>
 }
 
@@ -45,27 +40,21 @@ export const useContent = create<ContentState>((set, get) => ({
   facilities: {},
   photos: {},
   tour: EMPTY_TOUR,
-  program: null,
-  calibration: null,
   load: () => {
     if (get().status === 'ready') return Promise.resolve()
     if (inflight) return inflight
     set({ status: 'loading' })
     inflight = (async () => {
-      const [fac, photos, tour, program, cal] = await Promise.all([
+      const [fac, photos, tour] = await Promise.all([
         getJson<{ facilities?: FacilityMap }>('content/facilities.json'),
         getJson<PhotoMap>('content/photos.json'),
         getJson<Partial<Tour>>('content/tour.json'),
-        getJson<unknown>('content/program.json'),
-        getJson<{ calibration?: Calibration | null }>('content/geo-calibration.json'),
       ])
       set({
         status: 'ready',
         facilities: sanitizeFacilities(fac?.facilities),
         photos: sanitizePhotos(photos),
         tour: sanitizeTour(tour),
-        program: sanitizeProgram(program),
-        calibration: isCalibration(cal?.calibration) ? cal!.calibration! : null,
       })
     })().finally(() => {
       inflight = null
@@ -145,91 +134,6 @@ export function sanitizeTour(raw: Partial<Tour> | null): Tour {
       }),
   }
 }
-
-// ───────────── 입학설명회 식순 (program.json) ─────────────
-
-export const DEFAULT_PROGRAM_TITLE = '입학설명회 식순'
-const PROGRAM_KINDS: readonly ProgramKind[] = ['reception', 'talk', 'quiz', 'tour', 'end']
-
-function sanitizeRow(raw: unknown): ProgramRow | null {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
-  const r = raw as Record<string, unknown>
-  const start = str(r.start).trim()
-  const startMin = parseHm(start)
-  const title = str(r.title).trim()
-  const kind = PROGRAM_KINDS.find((k) => k === r.kind)
-  if (startMin === null || !title || !kind) return null
-  const end = str(r.end).trim()
-  const endMin = parseHm(end)
-  const badge = str(r.badge).trim()
-  const short = str(r.short).trim()
-  const desc = str(r.desc).trim()
-  const items = strList(r.items).map((t) => t.trim())
-  return {
-    start,
-    ...(endMin !== null && endMin > startMin ? { end } : {}),
-    badge,
-    ...(short ? { short } : {}),
-    kind,
-    title,
-    ...(desc ? { desc } : {}),
-    ...(items.length ? { items } : {}),
-    ...(r.action === 'spots' ? { action: 'spots' as const } : {}),
-  }
-}
-
-/**
- * program.json → Program. 쓸 수 있는 식순 줄이 하나도 없으면 null (→ '식순' 탭을 숨긴다).
- * 시각 형식이 틀린 줄·알 수 없는 kind 의 줄은 버리고, 알 수 없는 키(_안내 등)는 무시하며, 줄은 시작 시각 순으로 정렬한다.
- */
-export function sanitizeProgram(raw: unknown): Program | null {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
-  const r = raw as Record<string, unknown>
-  const rows = (Array.isArray(r.program) ? r.program : [])
-    .map(sanitizeRow)
-    .filter((x): x is ProgramRow => x !== null)
-    .map((row, i) => ({ row, i, m: parseHm(row.start) ?? 0 }))
-    .sort((a, b) => a.m - b.m || a.i - b.i)
-    .map((x) => x.row)
-  if (rows.length === 0) return null
-
-  const info: ProgramInfo[] = (Array.isArray(r.info) ? r.info : [])
-    .filter((x): x is Record<string, unknown> => !!x && typeof x === 'object')
-    .map((x) => ({ label: str(x.label).trim(), value: str(x.value).trim(), facility: str(x.facility).trim() }))
-    .filter((x) => x.label && x.value)
-    .map(({ facility, ...x }) => (facility ? { ...x, facility } : x))
-
-  const notes: ProgramNote[] = (Array.isArray(r.notes) ? r.notes : [])
-    .filter((x): x is Record<string, unknown> => !!x && typeof x === 'object')
-    .map((x) => ({ strong: str(x.strong).trim(), text: str(x.text).trim() }))
-    .filter((x) => x.strong || x.text)
-
-  let contact: ProgramContact | null = null
-  if (r.contact && typeof r.contact === 'object' && !Array.isArray(r.contact)) {
-    const c = r.contact as Record<string, unknown>
-    const phones = strList(c.phones).map((p) => p.trim())
-    const org = str(c.org).trim()
-    if (phones.length || org) contact = { title: str(c.title).trim() || '행사 문의', phones, org }
-  }
-
-  return {
-    title: str(r.title).trim() || DEFAULT_PROGRAM_TITLE,
-    eyebrow: str(r.eyebrow).trim(),
-    lead: str(r.lead).trim(),
-    anniversary: str(r.anniversary).trim(),
-    dateText: str(r.dateText).trim(),
-    info,
-    program: rows,
-    notes,
-    contact,
-  }
-}
-
-function isCalibration(c: unknown): c is Calibration {
-  const x = c as Calibration | null | undefined
-  return !!x && Array.isArray(x.pxToEnu) && x.pxToEnu.length === 6 && x.pxToEnu.every((n) => typeof n === 'number' && isFinite(n))
-}
-export { isCalibration }
 
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
 const strList = (v: unknown): string[] => (Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string' && s.trim() !== '') : [])

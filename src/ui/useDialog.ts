@@ -1,5 +1,5 @@
 // 모달 대화상자 공통 동작: 포커스 이동·트랩, Esc 닫기, 배경 비활성(inert), 닫은 뒤 포커스 복귀.
-// ConsentSheet · AboutModal 이 사용한다. 대화상자는 createPortal(…, document.body) 로 렌더할 것
+// AboutModal 이 사용한다. 대화상자는 createPortal(…, document.body) 로 렌더할 것
 // (backdrop-filter 를 가진 조상 안의 position:fixed 는 화면 전체를 덮지 못하기 때문).
 import { useEffect, useRef, type RefObject } from 'react'
 

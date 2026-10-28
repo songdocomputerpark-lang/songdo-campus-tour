@@ -81,7 +81,7 @@ export function TourBar({ layout, onPeekHeight }: TourBarProps) {
       const free = !a || a === document.body || (a instanceof Element && !!a.closest('[data-tour-keys]'))
       if (!free) return
       const st = useAppStore.getState()
-      if (st.search.open || st.ui.aboutOpen || st.ui.intro || st.gps.status === 'consent') return
+      if (st.search.open || st.ui.aboutOpen || st.ui.intro) return
       e.preventDefault()
       if (e.key === 'ArrowRight') next()
       else prev()

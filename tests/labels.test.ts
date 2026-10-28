@@ -1,19 +1,9 @@
-// 건물 이름표 충돌 회피 · GPS 글자 · 교실 부제 · 투어 콤팩트 시트
+// 건물 이름표 충돌 회피 · 교실 부제 · 투어 콤팩트 시트
 import { describe, expect, it } from 'vitest'
 import { allRooms, buildings, classroomSubtitle } from '../src/data'
 import type { Building, BuildingId } from '../src/data/types'
 import { translatePoly } from '../src/lib/geometry'
-import {
-  COMPACT_K,
-  LABEL_SIDE,
-  buildingHeight,
-  estimateTextWidth,
-  gpsLabelClear,
-  labelAnchors,
-  labelMetrics,
-  labelStep,
-  placeLabels,
-} from '../src/map/buildingLabels'
+import { COMPACT_K, LABEL_SIDE, buildingHeight, estimateTextWidth, labelAnchors, labelMetrics, labelStep, placeLabels } from '../src/map/buildingLabels'
 import { sheetMetrics, SHEET_PEEK } from '../src/ui/BottomSheet'
 
 const IDS = buildings.map((b) => b.id) as BuildingId[]
@@ -62,19 +52,6 @@ describe('placeLabels — 건물 이름표 충돌 회피', () => {
 
   it('같은 배율 단계에서는 같은 객체를 돌려준다(캐시)', () => {
     expect(placeLabels(0.4, false)).toBe(placeLabels(0.401, false))
-  })
-})
-
-describe('gpsLabelClear — GPS 글자는 이름표보다 낮은 우선순위', () => {
-  it('이름표 위에 놓이면 생략하고, 멀리 떨어져 있으면 보인다', () => {
-    const p = placeLabels(0.44, false)
-    // 도서관 이름표 사각형 한가운데 바로 위에 점이 있으면 글자(점 아래)가 이름표와 겹친다
-    const r = p.items.library.rect
-    const x = (r.x0 + r.x1) / 2 / p.k
-    const y = (r.y0 - 20) / p.k
-    expect(gpsLabelClear(p, x, y, '추정 위치 ±8 m')).toBe(false)
-    // 운동장 한가운데(이름표가 없는 곳)
-    expect(gpsLabelClear(p, 1180, 1250, '추정 위치 ±8 m')).toBe(true)
   })
 })
 
@@ -245,21 +222,5 @@ describe('placeLabels — 불변식', () => {
     expect(placeLabels(COMPACT_K * 0.9, false).compact).toBe(true)
     expect(placeLabels(COMPACT_K * 1.2, false).compact).toBe(false)
     expect(placeLabels(COMPACT_K * 1.2, true).compact).toBe(true)
-  })
-})
-
-describe('gpsLabelClear — 글자 폭 단조성', () => {
-  it('같은 자리에서 글자가 짧아지면 더 쉽게 비어 있다고 판정된다', () => {
-    const p = placeLabels(0.44, false)
-    const long = '추정 위치 ±123 m (정확도 낮음)'
-    const short = '±8 m'
-    for (const b of buildings) {
-      const [x, y] = b.center
-      if (gpsLabelClear(p, x, y, long)) expect(gpsLabelClear(p, x, y, short), b.id).toBe(true)
-    }
-  })
-  it('이름표가 하나도 보이지 않는 배율에서도 항상 비어 있다(유한 좌표)', () => {
-    const p = placeLabels(0.44, false)
-    expect(gpsLabelClear({ ...p, items: Object.fromEntries(IDS.map((id) => [id, { ...p.items[id], visible: false }])) as typeof p.items }, 100, 100, '추정 위치 ±8 m')).toBe(true)
   })
 })

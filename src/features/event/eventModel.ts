@@ -3,7 +3,6 @@
  *
  *  - 장소 번호: 별표 번호 1~N, 출발 지점은 0 (hash #/event/0 · Spot.no === null)
  *  - 건물별 묶음, 이전/다음 순서(출발 → ★1 → … → ★N), 범례 문구, 번호 범위 표기("5–8" · "3·4")
- *  - GPS 직선 안내: 방위각 · 8방위 한국어 · 문구 (경로가 아니라 직선 방향·거리)
  * 모든 이름·층은 spots.ts(= tour.json + floors.json) 에서 오며, 여기서 새로 만들어 내지 않는다.
  */
 import { getBuilding } from '../../data'
@@ -82,43 +81,3 @@ export function eventLegend(startNote: string | null | undefined): string {
 export function officialName(s: Pick<Spot, 'label' | 'roomName'>): string | null {
   return s.roomName && s.roomName !== s.label ? s.roomName : null
 }
-
-// ───────────── GPS 직선 안내 ─────────────
-
-const COMPASS_KO = ['북쪽', '북동쪽', '동쪽', '남동쪽', '남쪽', '남서쪽', '서쪽', '북서쪽'] as const
-
-/** 진북 기준 방위각(도, 시계방향) → 8방위 한국어: 0 → "북쪽", 315 → "북서쪽" */
-export function compassKo(bearingDeg: number): string {
-  const d = ((bearingDeg % 360) + 360) % 360
-  return COMPASS_KO[Math.round(d / 45) % 8]
-}
-
-export interface LatLonPt {
-  lat: number
-  lon: number
-}
-
-/** 두 위경도 사이 초기 방위각(진북 기준 시계방향, 0~360) */
-export function bearingDeg(from: LatLonPt, to: LatLonPt): number {
-  const rad = Math.PI / 180
-  const dLon = (to.lon - from.lon) * rad
-  const y = Math.sin(dLon) * Math.cos(to.lat * rad)
-  const x = Math.cos(from.lat * rad) * Math.sin(to.lat * rad) - Math.sin(from.lat * rad) * Math.cos(to.lat * rad) * Math.cos(dLon)
-  return ((Math.atan2(y, x) / rad) + 360) % 360
-}
-
-/** 직선거리 표기용 반올림: 100 m 미만은 5 m, 1 km 미만은 10 m, 그 이상은 0.1 km 단위 */
-export function straightDistanceText(m: number): string {
-  if (!Number.isFinite(m) || m < 0) return ''
-  if (m < 100) return `약 ${Math.max(5, Math.round(m / 5) * 5)} m`
-  if (Math.round(m / 10) * 10 < 1000) return `약 ${Math.round(m / 10) * 10} m`
-  const km = m / 1000
-  return `약 ${km < 10 ? km.toFixed(1) : Math.round(km)} km`
-}
-
-/** "현재 위치에서 직선 약 120 m · 북서쪽" */
-export function straightLineText(distanceM: number, bearing: number): string {
-  return `현재 위치에서 직선 ${straightDistanceText(distanceM)} · ${compassKo(bearing)}`
-}
-
-export const STRAIGHT_LINE_CAPTION = '직선 방향이며 실제 걷는 길과 다를 수 있어요'
