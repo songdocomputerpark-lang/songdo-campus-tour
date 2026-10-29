@@ -1,1 +1,234 @@
-{}
+{
+  "building-gym": [
+    {
+      "src": "photos/building-gym/01.jpg",
+      "caption": "4층 체육관 — 학술제(SCIENCE SUMMIT)"
+    },
+    {
+      "src": "photos/building-gym/02.jpg",
+      "caption": "4층 체육관 — 졸업식"
+    },
+    {
+      "src": "photos/building-gym/03.jpg",
+      "caption": "3층 중강당 — 진로·진학 설명회"
+    }
+  ],
+  "building-library": [
+    {
+      "src": "photos/building-library/01.jpg",
+      "caption": "3층 스마트팜(greenery) 수경재배 관찰"
+    },
+    {
+      "src": "photos/building-library/02.jpg",
+      "caption": "2층 아우름터(1·2학년 자기주도 학습공간)"
+    },
+    {
+      "src": "photos/building-library/03.jpg",
+      "caption": "2층 아우름터 입구"
+    }
+  ],
+  "building-main": [
+    {
+      "src": "photos/building-main/01.jpg",
+      "caption": "본관동 정면과 중앙 현관"
+    },
+    {
+      "src": "photos/building-main/02.jpg",
+      "caption": "교시석과 본관동"
+    },
+    {
+      "src": "photos/building-main/03.jpg",
+      "caption": "은행나무 길과 본관동"
+    }
+  ],
+  "building-new": [
+    {
+      "src": "photos/building-new/01.jpg",
+      "caption": "4층 채움 면학실(3학년 자기주도 학습공간)"
+    },
+    {
+      "src": "photos/building-new/02.jpg",
+      "caption": "채움 면학실 서가와 개인 학습 부스"
+    },
+    {
+      "src": "photos/building-new/03.jpg",
+      "caption": "1층 체력단련실"
+    }
+  ],
+  "building-science": [
+    {
+      "src": "photos/building-science/01.jpg",
+      "caption": "과학관동(SCIENCE HALL) 앞 J-ROTC 대원들"
+    },
+    {
+      "src": "photos/building-science/02.jpg",
+      "caption": "3층 지능형 과학실(라부아지에실)"
+    },
+    {
+      "src": "photos/building-science/03.jpg",
+      "caption": "지능형 과학실(화학실험실)"
+    }
+  ],
+  "gym-3f-p90": [
+    {
+      "src": "photos/gym-3f-p90/01.jpg",
+      "caption": "중강당 진로·진학 설명회"
+    }
+  ],
+  "gym-4f-p91": [
+    {
+      "src": "photos/gym-4f-p91/01.jpg",
+      "caption": "체육관 학술제 전경"
+    },
+    {
+      "src": "photos/gym-4f-p91/02.jpg",
+      "caption": "학술제가 열린 체육관"
+    },
+    {
+      "src": "photos/gym-4f-p91/03.jpg",
+      "caption": "체육관 졸업식"
+    },
+    {
+      "src": "photos/gym-4f-p91/04.jpg",
+      "caption": "체육관 윤영하 소령 추모식"
+    }
+  ],
+  "library-2f-p68": [
+    {
+      "src": "photos/library-2f-p68/01.jpg",
+      "caption": "아우름터 학습 공간"
+    },
+    {
+      "src": "photos/library-2f-p68/02.jpg",
+      "caption": "아우름터 테이블 학습실"
+    },
+    {
+      "src": "photos/library-2f-p68/03.jpg",
+      "caption": "아우름터 입구(S-TEAM 발표)"
+    },
+    {
+      "src": "photos/library-2f-p68/04.jpg",
+      "caption": "S-TEAM 인문사회 발표대회"
+    }
+  ],
+  "library-3f-p74": [
+    {
+      "src": "photos/library-3f-p74/01.jpg",
+      "caption": "P.B.L실 가변형 책상"
+    },
+    {
+      "src": "photos/library-3f-p74/02.jpg",
+      "caption": "AI-STEAM 탐구 활동 설명회"
+    }
+  ],
+  "library-3f-p77": [
+    {
+      "src": "photos/library-3f-p77/01.jpg",
+      "caption": "스마트팜 수경재배 관찰"
+    },
+    {
+      "src": "photos/library-3f-p77/02.jpg",
+      "caption": "스마트팜에서 작물 관리"
+    }
+  ],
+  "main-1f-lobby": [
+    {
+      "src": "photos/main-1f-lobby/01.jpg",
+      "caption": "본관동 중앙 현관"
+    }
+  ],
+  "main-1f-p1": [
+    {
+      "src": "photos/main-1f-p1/01.jpg",
+      "caption": "홈베이스(숨터) 휴게 공간"
+    }
+  ],
+  "main-2f-p21": [
+    {
+      "src": "photos/main-2f-p21/01.jpg",
+      "caption": "학습실Ⅰ 아침 책마루 독서"
+    },
+    {
+      "src": "photos/main-2f-p21/02.jpg",
+      "caption": "학습실에서 함께 공부하는 학생들"
+    },
+    {
+      "src": "photos/main-2f-p21/03.jpg",
+      "caption": "배움두레 수학 멘토링"
+    }
+  ],
+  "new-1f-p34": [
+    {
+      "src": "photos/new-1f-p34/01.jpg",
+      "caption": "체력단련실에서 운동하는 학생들"
+    }
+  ],
+  "new-2f-p35": [
+    {
+      "src": "photos/new-2f-p35/01.jpg",
+      "caption": "넓은 강의실 진로 특강"
+    },
+    {
+      "src": "photos/new-2f-p35/02.jpg",
+      "caption": "자기주도학습"
+    }
+  ],
+  "new-4f-p42": [
+    {
+      "src": "photos/new-4f-p42/01.jpg",
+      "caption": "채움 면학실 개인 칸막이 책상"
+    },
+    {
+      "src": "photos/new-4f-p42/02.jpg",
+      "caption": "채움 개인 학습 부스"
+    },
+    {
+      "src": "photos/new-4f-p42/03.jpg",
+      "caption": "채움 면학실 서가와 개인 부스"
+    },
+    {
+      "src": "photos/new-4f-p42/04.jpg",
+      "caption": "개인 학습 부스(05~08)"
+    }
+  ],
+  "science-2f-p51": [
+    {
+      "src": "photos/science-2f-p51/01.jpg",
+      "caption": "바이오 프로젝트 실험"
+    },
+    {
+      "src": "photos/science-2f-p51/02.jpg",
+      "caption": "임상의학 탐구교실"
+    },
+    {
+      "src": "photos/science-2f-p51/03.jpg",
+      "caption": "정보생물학 교실"
+    }
+  ],
+  "science-3f-p54": [
+    {
+      "src": "photos/science-3f-p54/01.jpg",
+      "caption": "지능형 과학실(라부아지에실)"
+    },
+    {
+      "src": "photos/science-3f-p54/02.jpg",
+      "caption": "SCIENCE WEEK 빛의 굴절 실험 교실(과학관 지능형과학실)"
+    }
+  ],
+  "science-4f-p59": [
+    {
+      "src": "photos/science-4f-p59/01.jpg",
+      "caption": "화학실험실"
+    },
+    {
+      "src": "photos/science-4f-p59/02.jpg",
+      "caption": "유기화학 오픈랩"
+    }
+  ],
+  "science-b1-p43": [
+    {
+      "src": "photos/science-b1-p43/01.jpg",
+      "caption": "당구장에서 연습하는 학생들"
+    }
+  ]
+}
