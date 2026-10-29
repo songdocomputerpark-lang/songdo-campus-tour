@@ -10,7 +10,7 @@ import { DetailPanel } from '../features/detail/DetailPanel'
 import { EventPanel } from '../features/event/EventPanel'
 import { SearchBox } from '../features/search/SearchBox'
 import { TourBar } from '../features/tour/TourBar'
-import { remPx } from '../lib/env'
+import { remPx, viewportHeight } from '../lib/env'
 import { Compass, useNorthDeg } from '../map/Compass'
 import { MapStage } from '../map/MapStage'
 import { classroomSubtitle, getBuilding, getFloor, getRoom, floorLabel } from '../data'
@@ -62,9 +62,9 @@ function useSafeInsets() {
 }
 
 function useViewportH(): number {
-  const [h, setH] = useState(() => window.visualViewport?.height ?? window.innerHeight)
+  const [h, setH] = useState(() => viewportHeight())
   useEffect(() => {
-    const on = () => setH(window.visualViewport?.height ?? window.innerHeight)
+    const on = () => setH(viewportHeight())
     window.addEventListener('resize', on)
     window.visualViewport?.addEventListener('resize', on)
     return () => {
@@ -208,6 +208,7 @@ function MapShell() {
         rightShift={isDesktop && visible ? panelPx - 1.5 * rem : 0}
         bottomLift={toolbarH + sheetVisible}
         compactControls={!isDesktop && visible && snap !== 'peek'}
+        hideZoom={!isDesktop && visible && (snap === 'full' || (snap === 'half' && view === 'floor'))}
       />
 
       {/* 상단: 데스크톱 = 브랜드 + 브레드크럼 + 검색 / 모바일 = 얇은 바 */}

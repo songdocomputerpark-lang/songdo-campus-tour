@@ -27,6 +27,6 @@ export function useEventPlacement(): EventPlacement {
   const model = useEventModel()
   const selected = useEventSelectedBuilding()
   const subscribe = useCallback((cb: () => void) => api.subscribe(() => cb()), [api])
-  const snap = useCallback(() => placeEventCards(model, api.getTransform().k, narrow, uiScale(), selected), [api, model, narrow, selected])
+  const snap = useCallback(() => placeEventCards(model, api.getSettledScale(), narrow, uiScale(), selected), [api, model, narrow, selected])
   return useSyncExternalStore(subscribe, snap, snap)
 }

@@ -1,7 +1,7 @@
 // 캠퍼스 배치도 (2.5D 건축 모형 느낌의 순수 SVG).
 // 좌표계 = campus.json 의 배치도 px (site.viewBox, y 아래). 월드 그룹에 pan/zoom matrix 가 적용된다.
 // 화면 크기 고정 요소: <g style={{ transform: `translate(${x}px,${y}px) scale(var(--ik))` }}> (--ik = 1/배율, 월드 <g> 에 프레임마다 갱신됨).
-import { memo, useCallback, useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { buildings, campus, site } from '../data'
 import type { Building, Bounds, Insets, MinorBuilding, Pt } from '../data/types'
 import { spotByNo } from '../features/event/eventModel'
@@ -28,7 +28,7 @@ import { MapViewport } from './MapViewport'
 import { SpotPinLayer } from './SpotPinLayer'
 import { uiScale } from '../lib/env'
 import { useLabelPlacement } from './useLabelPlacement'
-import type { PanZoomApi } from './usePanZoom'
+import { retapZoom, type PanZoomApi } from './usePanZoom'
 
 export interface CampusMapProps {
   /** false 면 숨김 상태(상호작용·포커스 차단). 크로스페이드는 상위(MapStage)가 담당 */
@@ -233,7 +233,8 @@ const BuildingShape = memo(function BuildingShape({
   selected: boolean
   dim: boolean
   interactive: boolean
-  onSelect: (id: Building['id']) => void
+  /** client = 누른 곳의 브라우저 좌표(포인터로 눌렀을 때) — 이미 고른 건물을 다시 누르면 그곳을 중심으로 확대한다 */
+  onSelect: (id: Building['id'], client?: Pt) => void
   /** 입학설명회 안내 모드: 'spot' = 안내 장소가 있는 건물(금빛 테두리) · 'muted' = 그 밖의 건물(흐리게) */
   ev?: 'spot' | 'muted'
 }) {
@@ -263,7 +264,7 @@ const BuildingShape = memo(function BuildingShape({
           : undefined
       }
       aria-pressed={interactive ? selected : undefined}
-      onClick={interactive ? () => onSelect(b.id) : undefined}
+      onClick={interactive ? (e) => onSelect(b.id, e.detail === 0 ? undefined : [e.clientX, e.clientY]) : undefined}
       onKeyDown={interactive ? onKey : undefined}
     >
       <defs>
@@ -361,9 +362,18 @@ export function CampusMap({ active = true, insets, className }: CampusMapProps) 
   // 선택 건물로 줌 / 선택 해제 시 전체 맞춤. (층 평면도 화면에서는 현재 카메라 유지 → 크로스페이드)
   //  안내 모드: 선택한 안내 장소의 '건물 + 말풍선 카드'가 한 화면에 들어오도록(카드는 화면 고정 크기라 배율을 반복 계산), 선택이 없으면 전체 맞춤.
   //  insets(패널·시트 높이)가 바뀌어도 다시 맞춘다.
+  //  단, 시트 높이만 바뀌었고 사용자가 손가락·버튼으로 직접 확대/이동해 둔 화면이면 그대로 둔다(시트를 끌 때 확대가 풀리지 않게).
   const insetsKey = `${insets.top}|${insets.right}|${insets.bottom}|${insets.left}`
+  const lastAim = useRef('')
   useEffect(() => {
-    if (!api || view !== 'campus') return
+    if (!api || view !== 'campus') {
+      lastAim.current = ''
+      return
+    }
+    const aim = `${buildingId}|${eventActive}|${evBuilding}|${evModel.signature}`
+    const onlyInsets = lastAim.current === aim
+    lastAim.current = aim
+    if (onlyInsets && !api.isFollowing()) return
     if (eventActive) {
       const eb = evBuilding ? evModel.byId.get(evBuilding as Building['id']) : undefined
       if (!eb) {
@@ -390,27 +400,36 @@ export function CampusMap({ active = true, insets, className }: CampusMapProps) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api, buildingId, view, eventActive, evBuilding, evModel, eventActive ? insetsKey : ''])
 
+  // 이미 고른 건물을 한 번 더 누르면: 누른 곳(키보드면 건물 중심)을 중심으로 한 단계 더 확대
+  const zoomInto = useCallback(
+    (id: Building['id'], client?: Pt) => {
+      if (!api) return
+      let at: Pt | null = GEO_BY_ID.get(id)?.b.center ?? null
+      if (client) {
+        const [sx, sy] = api.clientToScreen(client[0], client[1])
+        at = api.screenToWorld(sx, sy)
+      }
+      if (at) retapZoom(api, at)
+    },
+    [api],
+  )
+
   const select = useCallback(
-    (id: Building['id']) => {
+    (id: Building['id'], client?: Pt) => {
       const st = useAppStore.getState()
       if (st.event.active) {
-        // 안내 모드: 건물을 누르면 그 건물의 안내 장소를 연다 (이미 그 건물의 장소를 보고 있으면 그대로)
+        // 안내 모드: 건물을 누르면 그 건물의 안내 장소를 연다 (이미 그 건물의 장소를 보고 있으면 더 확대)
         const list = getSpots().byBuilding.get(id) ?? []
         const cur = spotByNo(getSpots(), st.event.spotNo)
         if (list.length && cur?.buildingId !== id) st.openEvent(list[0].no ?? 0)
+        else if (list.length) zoomInto(id, client)
         return
       }
-      selectBuilding(id)
+      if (st.buildingId === id && st.view === 'campus') zoomInto(id, client)
+      else selectBuilding(id)
     },
-    [selectBuilding],
+    [selectBuilding, zoomInto],
   )
-
-  const onBackgroundTap = useCallback(() => {
-    const st = useAppStore.getState()
-    if (st.event.active) {
-      if (st.event.spotNo !== null && st.view === 'campus') st.openEvent(null) // 빈 곳 탭 = 선택 해제 → 전체 안내
-    } else if (st.buildingId) st.goCampus()
-  }, [])
 
   const interactive = active
   const content = useMemo(() => expandBounds(SITE_BOUNDS, 40), [])
@@ -425,7 +444,8 @@ export function CampusMap({ active = true, insets, className }: CampusMapProps) 
         insets={insets}
         maxScale={9}
         label="캠퍼스 배치도. 끌어서 이동, 두 손가락 또는 휠로 확대·축소, 건물을 선택해 안내를 볼 수 있습니다"
-        onBackgroundTap={onBackgroundTap}
+        // 빈 곳을 한 번 눌러도 보던 화면(선택·확대)은 그대로 둔다 — 두 번 누름(확대)의 첫 탭이 화면을 전체로 되돌리지 않게.
+        // 선택 해제는 패널의 닫기·"← 전체 안내"·Esc 로 한다.
         onApi={onApi}
         defs={DEFS}
       >

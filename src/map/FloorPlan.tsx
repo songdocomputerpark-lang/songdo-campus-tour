@@ -22,7 +22,7 @@ import { CoreGlyph, flagPath, SPOT_START_EDGE, SPOT_START_FILL, SPOT_START_INK, 
 import { registerMap } from './mapBus'
 import { MapViewport } from './MapViewport'
 import { LABEL_LINE_HEIGHT, layoutLabel, textEm, type LabelLayout } from './roomLayout'
-import type { PanZoomApi } from './usePanZoom'
+import { retapZoom, type PanZoomApi } from './usePanZoom'
 
 export interface FloorPlanProps {
   active?: boolean
@@ -549,7 +549,21 @@ export function FloorPlan({ active = true, insets, className }: FloorPlanProps) 
     })
   }, [api, floor, roomId, insetsKey])
 
-  const onSelect = useCallback((id: string) => selectRoom(id), [selectRoom])
+  // 이미 고른 방을 한 번 더 누르면 그 방을 중심으로 한 단계 더 확대 (카메라가 이동 중이면 무시 — 더블탭이 이동을 끊지 않게)
+  const onSelect = useCallback(
+    (id: string) => {
+      if (api && floor && id === useAppStore.getState().roomId) {
+        const room = floor.rooms.find((r) => r.id === id)
+        if (room) {
+          const rb = boundsOf(room.poly)
+          retapZoom(api, [rb.x + rb.w / 2, rb.y + rb.h / 2])
+          return
+        }
+      }
+      selectRoom(id)
+    },
+    [api, floor, selectRoom],
+  )
   const onBackgroundTap = useCallback(() => clearRoom(), [clearRoom])
 
   if (!floor || !building) return null
@@ -596,7 +610,7 @@ function useMapScaleSafe(api: PanZoomApi | null): number {
     if (!api) return
     const q = (v: number) => Math.pow(2, Math.round(Math.log2(v) * 4) / 4)
     const update = () => setK((prev) => {
-      const nk = q(api.getTransform().k)
+      const nk = q(api.getSettledScale())
       return nk === prev ? prev : nk
     })
     update()

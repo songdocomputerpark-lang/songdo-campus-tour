@@ -3,6 +3,7 @@
 //  - 시트는 툴바 바로 위(bottomReserve)에 붙고, 상단 바(topReserve) 아래까지 확장된다.
 //  - 콘텐츠 스크롤은 half·full 에서만 가능(peek 에서는 머리글만 보임). peek 높이는 기본 SHEET_PEEK, 투어는 머리글에 맞춘 값(peek prop).
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { viewportHeight } from '../lib/env'
 import type { PanelSnap } from '../store/useAppStore'
 
 export const SHEET_PEEK = 164
@@ -43,7 +44,7 @@ interface Props {
 export function BottomSheet({ open, snap, onSnapChange, onClose, topReserve, bottomReserve, peek, label, children }: Props) {
   const [vh, setVh] = useState(() => (typeof window === 'undefined' ? 800 : window.innerHeight))
   useEffect(() => {
-    const on = () => setVh(window.visualViewport?.height ?? window.innerHeight)
+    const on = () => setVh(viewportHeight())
     on()
     window.addEventListener('resize', on)
     window.visualViewport?.addEventListener('resize', on)

@@ -8,7 +8,7 @@
  * 내용은 모두 tour.json(+ floors.json)에서 온다 — 이름·층·안내 문구·찾아가는 방법·머리말을 화면이 지어내지 않는다.
  * 접근성: 목록 줄은 버튼(spotAria), 지도의 카드는 aria-hidden 복제본. 장소가 바뀌면 aria-live 로 알리고, ←/→ 이전·다음, Esc 전체 안내(Shell).
  */
-import { CalendarDays, ChevronLeft, ChevronRight, Layers, MapPin, Route, X } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Layers, MapPin, Maximize2, Route, X } from 'lucide-react'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { floorLabel, getBuilding } from '../../data'
 import { tint } from '../../lib/color'
@@ -315,8 +315,19 @@ function EventDetail({ spot, spots }: { spot: Spot; spots: SpotIndex }) {
           </div>
         )}
 
-        <div className="rounded-card border border-line bg-white px-3 pb-3 pt-4 shadow-soft">
+        {/* 층 도해를 누르면 그 층 평면도(두 손가락 확대 가능)로 — 키보드·스크린리더는 아래 "평면도에서 보기" 버튼을 쓴다 */}
+        <div
+          onClick={() => eventShowFloor(no)}
+          className="group relative cursor-pointer rounded-card border border-line bg-white px-3 pb-3 pt-4 shadow-soft transition-[border-color,transform] duration-180 hover:border-navy/40 active:scale-[0.99]"
+        >
           <FloorStack building={building} target={spot} marks={here} />
+          <span
+            className="pointer-events-none absolute right-2 top-2 inline-flex items-center gap-1 rounded-full border border-line bg-surface/95 py-0.5 pl-1.5 pr-2 text-[0.6875rem] font-bold text-ink-soft shadow-soft transition-colors group-hover:text-navy"
+            aria-hidden="true"
+          >
+            <Maximize2 size={11} strokeWidth={2.2} />
+            누르면 평면도
+          </span>
         </div>
 
         {stop?.note && <p className="mt-4 border-l-[3px] border-gold py-0.5 pl-3.5 text-[0.9375rem] leading-relaxed text-ink [text-wrap:pretty]">{stop.note}</p>}

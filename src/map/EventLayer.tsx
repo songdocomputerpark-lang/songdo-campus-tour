@@ -14,6 +14,9 @@ import { estimateTextWidth } from './buildingLabels'
 import { CARD_HEADER_H, CARD_ROW_H, entranceMarkers, entranceTextOffset, entranceTextSide, PIN_R, type CardPlacement, type CardRow, type EntranceMarker, type EvBuilding, type EvPin } from './eventLayout'
 import { flagPath, SPOT_START_EDGE, SPOT_START_FILL, SPOT_START_INK, SPOT_STAR_FILL, starPath } from './icons'
 import { useMapScale } from './MapContext'
+import { getMapApi } from './mapBus'
+import { retapZoom } from './usePanZoom'
+import type { Pt } from '../data/types'
 import { useEventModel, useEventPlacement, useEventSelectedBuilding } from './useEventPlacement'
 
 const STAR_ROW = starPath(5.4)
@@ -86,8 +89,21 @@ export function EventLayer({ interactive }: { interactive: boolean }) {
   )
 }
 
-function pick(no: number | null) {
-  useAppStore.getState().openEvent(no ?? 0)
+/** 카드·핀을 눌렀을 때: 그 장소를 연다. 이미 보고 있는 장소를 한 번 더 누르면 그 핀(at)을 중심으로 한 단계 더 확대 */
+function pick(no: number | null, at: Pt) {
+  const st = useAppStore.getState()
+  const target = no ?? 0
+  const api = getMapApi('campus')
+  if (api && st.view === 'campus' && st.event.spotNo === target) {
+    retapZoom(api, at)
+    return
+  }
+  st.openEvent(target)
+}
+
+/** 카드 줄(★번호 · 출발)에 해당하는 지붕 위 핀 위치 — 없으면 대표 핀 */
+function pinAt(b: EvBuilding, no: number | null): Pt {
+  return b.pins.find((p) => (no === null ? p.hasStart : p.nos.includes(no)))?.at ?? b.pins[0].at
 }
 
 // ───────────── 카드 ─────────────
@@ -142,7 +158,7 @@ const EventCard = memo(function EventCard({
         </g>
       )}
       {b.pins.map((p, i) => (
-        <PinMark key={i} pin={p} selected={selected} index={index} tappable={pl.mode === 'pin' && interactive} onPick={() => pick(b.rows[0]?.no ?? null)} />
+        <PinMark key={i} pin={p} selected={selected} index={index} tappable={pl.mode === 'pin' && interactive} onPick={() => pick(b.rows[0]?.no ?? null, p.at)} />
       ))}
     </g>
   )
@@ -174,7 +190,7 @@ function FullCard({
       <path d={`M0 ${CARD_HEADER_H}V12a12 12 0 0 1 12-12H${w - 12}a12 12 0 0 1 12 12V${CARD_HEADER_H}Z`} style={{ fill: tint(b.color, 0.2) }} />
       <rect x={0} y={0} width={w} height={3.5} rx={1.75} style={{ fill: b.color }} />
       <line x1={0} x2={w} y1={CARD_HEADER_H} y2={CARD_HEADER_H} className="ev-card-rule" />
-      <g data-hit="" style={{ cursor: 'pointer' }} onClick={() => first && pick(first.no)}>
+      <g data-hit="" style={{ cursor: 'pointer' }} onClick={() => first && pick(first.no, pinAt(b, first.no))}>
         <rect x={0} y={0} width={w} height={CARD_HEADER_H} fill="transparent" />
         <circle cx={22} cy={CARD_HEADER_H / 2 + 1} r={10} style={{ fill: b.color }} />
         <text x={22} y={CARD_HEADER_H / 2 + 1.5} textAnchor="middle" dominantBaseline="central" className="font-display" style={{ fontSize: 12.5, fontWeight: 600, fill: '#fff' }}>
@@ -188,6 +204,7 @@ function FullCard({
         <CardRowView
           key={r.roomId}
           r={r}
+          at={pinAt(b, r.no)}
           y={CARD_HEADER_H + i * CARD_ROW_H}
           w={w}
           active={r.roomId === selectedRoom}
@@ -200,7 +217,7 @@ function FullCard({
   )
 }
 
-function CardRowView({ r, y, w, active, hover, onHover, last }: { r: CardRow; y: number; w: number; active: boolean; hover: boolean; onHover: (id: string | null) => void; last: boolean }) {
+function CardRowView({ r, at, y, w, active, hover, onHover, last }: { r: CardRow; at: Pt; y: number; w: number; active: boolean; hover: boolean; onHover: (id: string | null) => void; last: boolean }) {
   const cy = y + CARD_ROW_H / 2
   return (
     <g
@@ -208,7 +225,7 @@ function CardRowView({ r, y, w, active, hover, onHover, last }: { r: CardRow; y:
       data-active={active}
       data-hit=""
       style={{ cursor: 'pointer' }}
-      onClick={() => pick(r.no)}
+      onClick={() => pick(r.no, at)}
       onPointerEnter={() => onHover(r.roomId)}
       onPointerLeave={() => onHover(null)}
     >
@@ -250,7 +267,7 @@ function CompactCard({ b, w, h, selected, onHover }: { b: EvBuilding; w: number;
       data-sel={selected}
       data-start={c.start}
       style={{ cursor: 'pointer' }}
-      onClick={() => first && pick(first.no)}
+      onClick={() => first && pick(first.no, pinAt(b, first.no))}
       onPointerEnter={() => first && onHover(first.roomId)}
       onPointerLeave={() => onHover(null)}
     >

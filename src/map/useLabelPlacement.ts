@@ -24,6 +24,6 @@ export function useLabelPlacement(): LabelPlacement {
     [eventActive, spots, selected],
   )
   const subscribe = useCallback((cb: () => void) => api.subscribe(() => cb()), [api])
-  const snap = useCallback(() => placeLabels(api.getTransform().k, narrow, uiScale(), obstacles), [api, narrow, obstacles])
+  const snap = useCallback(() => placeLabels(api.getSettledScale(), narrow, uiScale(), obstacles), [api, narrow, obstacles])
   return useSyncExternalStore(subscribe, snap, snap)
 }

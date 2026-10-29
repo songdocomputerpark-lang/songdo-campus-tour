@@ -11,6 +11,15 @@ export function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ')
 }
 
+/**
+ * 앱 레이아웃에 쓰는 화면 높이(px). 화상 키보드로 줄어든 높이는 반영하지만, 사용자가 페이지를 손가락으로 확대(pinch-zoom)해도
+ * 바뀌지 않는다(visualViewport.height 는 확대 배율만큼 작아진다) — 확대할 때 시트·지도 여백이 다시 계산되어 화면이 튀지 않게.
+ */
+export function viewportHeight(): number {
+  const vv = window.visualViewport
+  return vv ? vv.height * (vv.scale || 1) : window.innerHeight
+}
+
 /** 실제 CSS px 단위의 rem 크기(대형 디스플레이에서 html font-size 가 커짐) */
 export function remPx(): number {
   try {

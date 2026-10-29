@@ -17,8 +17,10 @@ interface Props {
   rightShift: number
   /** 모바일: 툴바 + 시트가 차지하는 하단 높이(px) */
   bottomLift: number
-  /** 모바일: 시트가 half/full 이면 조작 버튼을 숨겨 겹침 방지 */
+  /** 모바일: 시트가 half/full 이면 출처 줄을 빼서 겹침 방지 */
   compactControls: boolean
+  /** 모바일: 확대·축소 버튼을 숨긴다(시트를 끝까지 올렸을 때 · 층 화면에서 시트가 반 이상일 때 — 층 선택기와 겹침 방지) */
+  hideZoom: boolean
 }
 
 function ToolButton({ icon, label, pressed, onClick, disabled }: { icon: React.ReactNode; label: string; pressed?: boolean; onClick: () => void; disabled?: boolean }) {
@@ -40,7 +42,7 @@ function ToolButton({ icon, label, pressed, onClick, disabled }: { icon: React.R
   )
 }
 
-export function MapChrome({ isDesktop, rightShift, bottomLift, compactControls }: Props) {
+export function MapChrome({ isDesktop, rightShift, bottomLift, compactControls, hideZoom }: Props) {
   const view = useAppStore((s) => s.view)
   const buildingId = useAppStore((s) => s.buildingId)
   const floorId = useAppStore((s) => s.floorId)
@@ -152,11 +154,11 @@ export function MapChrome({ isDesktop, rightShift, bottomLift, compactControls }
           ...slide,
           right: rightPos,
           bottom: isDesktop ? '1.5rem' : bottomLift + 12,
-          opacity: !isDesktop && compactControls ? 0 : 1,
-          pointerEvents: !isDesktop && compactControls ? 'none' : undefined,
+          opacity: !isDesktop && hideZoom ? 0 : 1,
+          pointerEvents: !isDesktop && hideZoom ? 'none' : undefined,
         }}
       >
-        <MapControls api={api} />
+        <MapControls api={api} compact={!isDesktop && compactControls} />
       </div>
     </>
   )

@@ -3,9 +3,12 @@
 //  - 변환: screen = world * k + (x, y).  월드 그룹(<g ref={worldRef}>)에 matrix 를 직접 setAttribute 한다
 //    (React 재렌더 없음 → 60fps). 같은 요소에 CSS 변수 --k, --ik(=1/k) 를 갱신하므로, 화면 크기 고정 라벨은
 //    style={{ transform: `translate(${x}px, ${y}px) scale(var(--ik))` }} 로 그릴 수 있다.
-//  - 입력: 포인터 드래그(탭/드래그 임계 6px), 핀치(두 손가락), 휠(커서 기준 줌), 더블클릭/더블탭 확대, 키보드(화살표/+/-/0).
+//  - 입력: 포인터 드래그(탭/드래그 임계 마우스 6px · 손가락 12px), 핀치(두 손가락), 두 손가락 탭(축소), 휠(커서 기준 줌),
+//    더블클릭/더블탭 확대, 키보드(화살표/+/-/0).
 //  - 드래그가 임계값을 넘으면 뒤따르는 click 은 캡처 단계에서 차단 → 요소의 onClick 은 '탭'에서만 실행된다.
 //  - 빈 곳 탭 판정용: 클릭 가능한 요소에 data-hit 속성을 달아 둔다 (더블탭 확대·배경 탭 콜백에서 제외됨).
+//  - 손가락 제스처(드래그·핀치) 동안에는 '정착 배율'(getSettledScale)을 고정한다 → 배율에 따라 다시 그리는 라벨·카드가
+//    손가락 아래에서 사라지지 않고(iOS 는 사라진 요소로 간 터치를 잃는다), 손을 뗄 때 한 번만 다시 배치된다.
 //  - animateTo(bounds, {padding}): van Wijk smooth zoom(경로 최적 줌/팬) + rAF. prefers-reduced-motion 이면 즉시 이동.
 //  - insets(패널·툴바가 가리는 영역)를 고려해 '보이는 영역'의 중앙에 맞춘다. resize/insets 변화 시 마지막 대상으로 재맞춤.
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
@@ -47,8 +50,14 @@ export interface PanZoomApi {
   fit(opts?: AnimateOptions): void
   /** 점을 보이는 영역 중앙으로 (k 생략 시 현재 배율 유지) */
   focus(pt: Pt, opts?: AnimateOptions & { k?: number }): void
-  /** 보이는 영역 중앙 기준 배율 변경 (애니메이션) */
-  zoomBy(factor: number, screenAnchor?: Pt): void
+  /** 보이는 영역 중앙 기준 배율 변경 (애니메이션). duration 생략 시 150ms */
+  zoomBy(factor: number, screenAnchor?: Pt, duration?: number): void
+  /** 손가락 제스처 중에는 제스처 시작 전 배율, 그 밖에는 현재 배율 — 배율 단계에 따라 다시 그리는 레이어용 */
+  getSettledScale(): number
+  /** 카메라 이동 애니메이션 중인가 */
+  isAnimating(): boolean
+  /** 브라우저 좌표(clientX/Y) → 지도 화면 좌표 */
+  clientToScreen(cx: number, cy: number): Pt
   screenToWorld(sx: number, sy: number): Pt
   worldToScreen(wx: number, wy: number): Pt
   /** 현재 화면에 보이는 월드 사각형(insets 무시, 뷰포트 전체) */
@@ -85,7 +94,18 @@ export const PORTRAIT_ASPECT = 0.9
 /** 세로 화면 맞춤의 추가 여백(px) — portraitFit 영역 자체에 이미 여백이 들어 있다 */
 const PORTRAIT_PADDING = 6
 const DRAG_THRESHOLD = 6
+/** 손가락은 누르는 동안 조금씩 흔들린다 — 이 안에서 떼면 '탭'(선택)으로 본다 */
+const TOUCH_DRAG_THRESHOLD = 12
 const DOUBLE_TAP_MS = 320
+/** 더블탭 확대 배율 · 두 손가락 탭 축소 배율 · 탭 확대 애니메이션 길이(ms) */
+const DOUBLE_TAP_ZOOM = 2
+const TWO_FINGER_TAP_ZOOM = 1 / 2
+export const TAP_ZOOM_MS = 260
+/** 이미 고른 건물·장소·방을 한 번 더 눌렀을 때 확대 배율 (CampusMap · EventLayer · FloorPlan) */
+export const RETAP_ZOOM = 1.6
+/** 두 손가락 탭: 이 시간 안에, 이만큼 덜 움직이고 떼면 축소 */
+const TWO_FINGER_TAP_MS = 300
+const TWO_FINGER_TAP_SLOP = 10
 const RHO = Math.SQRT2
 
 interface PointerRec {
@@ -111,13 +131,17 @@ interface Internal {
   following: boolean
   pointers: Map<number, PointerRec>
   dragging: boolean
-  pinch: { d0: number; k0: number; w: Pt } | null
+  pinch: { d0: number; k0: number; w: Pt; m0: Pt; t0: number; moved: boolean } | null
+  /** 두 손가락 탭 후보(첫 손가락을 뗀 시각·중점) — 나머지 손가락도 곧 떼면 축소 */
+  twoTap: { t: number; x: number; y: number } | null
   start: Transform
   suppressClick: boolean
   lastTap: { t: number; x: number; y: number } | null
   lastType: string
   zoomGoal: Transform | null
   sized: boolean
+  /** 손가락 제스처 밖에서 마지막으로 정해진 배율 */
+  settledK: number
 }
 
 function easeInOutCubic(u: number): number {
@@ -168,6 +192,18 @@ function isOnHit(target: EventTarget | null): boolean {
   return !!(target as Element | null)?.closest?.('[data-hit]')
 }
 
+/**
+ * 이미 고른 건물·장소·방을 한 번 더 눌렀을 때: 그 점(월드 좌표)을 중심으로 한 단계 확대한다.
+ * 점이 보이는 영역 밖이면 가운데로 데려오며 확대. 카메라가 이동 중이면 무시(선택 직후 두 번 누름이 이동을 끊지 않게).
+ */
+export function retapZoom(api: PanZoomApi, at: Pt): void {
+  if (api.isAnimating()) return
+  const [sx, sy] = api.worldToScreen(at[0], at[1])
+  const a = api.availableRect()
+  if (sx < a.x || sx > a.x + a.w || sy < a.y || sy > a.y + a.h) api.focus(at, { k: api.getTransform().k * RETAP_ZOOM })
+  else api.zoomBy(RETAP_ZOOM, [sx, sy], TAP_ZOOM_MS)
+}
+
 export function usePanZoom(options: PanZoomOptions) {
   const optsRef = useRef(options)
   optsRef.current = options
@@ -185,12 +221,14 @@ export function usePanZoom(options: PanZoomOptions) {
       pointers: new Map(),
       dragging: false,
       pinch: null,
+      twoTap: null,
       start: { x: 0, y: 0, k: 1 },
       suppressClick: false,
       lastTap: null,
       lastType: 'mouse',
       zoomGoal: null,
       sized: false,
+      settledK: 1,
     }
   }
 
@@ -246,7 +284,14 @@ export function usePanZoom(options: PanZoomOptions) {
 
     const commit = (t: Transform, doClamp = true) => {
       S.t = doClamp ? clampT(t) : t
+      if (!S.dragging) S.settledK = S.t.k
       applyDom()
+      S.subs.forEach((cb) => cb(S.t))
+    }
+
+    /** 손가락 제스처가 끝났을 때: 정착 배율을 갱신하고 구독자에게 알린다(라벨·카드 재배치는 이때 한 번) */
+    const settle = () => {
+      S.settledK = S.t.k
       S.subs.forEach((cb) => cb(S.t))
     }
 
@@ -345,13 +390,13 @@ export function usePanZoom(options: PanZoomOptions) {
       optsRef.current.onInteract?.()
     }
 
-    const zoomAtPoint = (sx: number, sy: number, factor: number, animate: boolean) => {
+    const zoomAtPoint = (sx: number, sy: number, factor: number, animate: boolean, duration?: number) => {
       const base = S.zoomGoal ?? S.t
       const k = clamp(base.k * factor, minK(), maxK())
       const wx = (sx - base.x) / base.k
       const wy = (sy - base.y) / base.k
       const goal = { k, x: sx - wx * k, y: sy - wy * k }
-      if (animate) animateZoomAt(sx, sy, goal)
+      if (animate) animateZoomAt(sx, sy, goal, duration)
       else {
         cancelAnim()
         commit(goal)
@@ -387,12 +432,18 @@ export function usePanZoom(options: PanZoomOptions) {
         S.following = false
         animateView({ k, x: a.x + a.w / 2 - pt[0] * k, y: a.y + a.h / 2 - pt[1] * k }, o.duration, o.immediate)
       },
-      zoomBy: (factor, anchor) => {
+      zoomBy: (factor, anchor, duration) => {
         const a = avail()
         const sx = anchor ? anchor[0] : a.x + a.w / 2
         const sy = anchor ? anchor[1] : a.y + a.h / 2
         S.following = false
-        zoomAtPoint(sx, sy, factor, true)
+        zoomAtPoint(sx, sy, factor, true, duration)
+      },
+      getSettledScale: () => S.settledK,
+      isAnimating: () => S.raf !== 0,
+      clientToScreen: (cx, cy) => {
+        const r = containerRef.current?.getBoundingClientRect()
+        return r ? [cx - r.left, cy - r.top] : [cx, cy]
       },
       screenToWorld: (sx, sy) => [(sx - S.t.x) / S.t.k, (sy - S.t.y) / S.t.k],
       worldToScreen: (wx, wy) => [wx * S.t.k + S.t.x, wy * S.t.k + S.t.y],
@@ -402,7 +453,7 @@ export function usePanZoom(options: PanZoomOptions) {
       stop: cancelAnim,
     }
 
-    const I = { avail, transformFor, targetTransform, commit, interact, zoomAtPoint, animateView, clampT, cancelAnim }
+    const I = { avail, transformFor, targetTransform, commit, settle, interact, zoomAtPoint, animateView, clampT, cancelAnim }
     return { api, I }
   }, [])
 
@@ -437,6 +488,17 @@ export function usePanZoom(options: PanZoomOptions) {
     const onPointerDown = (e: PointerEvent) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return
       if ((e.target as Element | null)?.closest?.('[data-no-pan]')) return
+      // 새 터치의 첫 손가락인데 지난 포인터가 남아 있으면(가리키던 요소가 사라져 pointerup 을 못 받은 경우 등) 비우고 새로 시작한다.
+      // 그대로 두면 다음 한 손가락이 '핀치'로 오인되어 이동·탭이 먹통이 된다.
+      if (e.isPrimary && S.pointers.size > 0) {
+        S.pointers.clear()
+        S.pinch = null
+        S.twoTap = null
+        if (S.dragging) {
+          setDragging(false)
+          I.settle()
+        }
+      }
       S.lastType = e.pointerType
       I.cancelAnim()
       const [x, y] = local(e)
@@ -444,15 +506,25 @@ export function usePanZoom(options: PanZoomOptions) {
       if (S.pointers.size === 1) {
         S.start = { ...S.t }
         S.suppressClick = false
+        S.twoTap = null
       } else if (S.pointers.size === 2) {
         const [p1, p2] = Array.from(S.pointers.values())
         const d0 = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1
         const mx = (p1.x + p2.x) / 2
         const my = (p1.y + p2.y) / 2
-        S.pinch = { d0, k0: S.t.k, w: [(mx - S.t.x) / S.t.k, (my - S.t.y) / S.t.k] }
+        S.pinch = { d0, k0: S.t.k, w: [(mx - S.t.x) / S.t.k, (my - S.t.y) / S.t.k], m0: [mx, my], t0: performance.now(), moved: false }
         S.suppressClick = true
+        S.lastTap = null
         I.interact()
         if (!S.dragging) setDragging(true)
+        // 두 손가락을 지도 컨테이너로 붙잡는다 — 처음 닿은 카드·라벨이 다시 그려져 사라져도 핀치가 끊기지 않는다
+        for (const id of S.pointers.keys()) {
+          try {
+            el.setPointerCapture(id)
+          } catch {
+            /* ignore */
+          }
+        }
       }
     }
 
@@ -467,6 +539,9 @@ export function usePanZoom(options: PanZoomOptions) {
         const d = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1
         const mx = (p1.x + p2.x) / 2
         const my = (p1.y + p2.y) / 2
+        if (!S.pinch.moved && (Math.abs(d - S.pinch.d0) > TWO_FINGER_TAP_SLOP || Math.hypot(mx - S.pinch.m0[0], my - S.pinch.m0[1]) > TWO_FINGER_TAP_SLOP)) {
+          S.pinch.moved = true
+        }
         const k = d / S.pinch.d0 * S.pinch.k0
         const t = I.clampT({ k, x: mx - S.pinch.w[0] * k, y: my - S.pinch.w[1] * k })
         // clamp 로 k 가 바뀌면 앵커가 어긋나므로 k 기준으로 재계산
@@ -477,7 +552,7 @@ export function usePanZoom(options: PanZoomOptions) {
         const dx = x - rec.sx
         const dy = y - rec.sy
         if (!S.dragging) {
-          if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return
+          if (Math.hypot(dx, dy) < (e.pointerType === 'touch' ? TOUCH_DRAG_THRESHOLD : DRAG_THRESHOLD)) return
           setDragging(true)
           S.suppressClick = true
           I.interact()
@@ -496,6 +571,10 @@ export function usePanZoom(options: PanZoomOptions) {
       if (!rec) return
       S.pointers.delete(e.pointerId)
       if (S.pinch && S.pointers.size < 2) {
+        // 거의 움직이지 않고 곧바로 뗀 두 손가락 = '두 손가락 탭'(축소) 후보
+        if (!S.pinch.moved && e.type === 'pointerup' && performance.now() - S.pinch.t0 < TWO_FINGER_TAP_MS) {
+          S.twoTap = { t: performance.now(), x: S.pinch.m0[0], y: S.pinch.m0[1] }
+        }
         S.pinch = null
         // 핀치 후 남은 손가락으로 이어서 드래그하지 않도록 기준 갱신
         const rest = Array.from(S.pointers.values())[0]
@@ -508,19 +587,27 @@ export function usePanZoom(options: PanZoomOptions) {
       if (S.pointers.size === 0) {
         const wasDrag = S.dragging
         setDragging(false)
+        if (wasDrag) I.settle()
         if (S.suppressClick) {
           // 직후 발생하는 click 을 막고, 다음 매크로태스크에서 해제
           window.setTimeout(() => {
             S.suppressClick = false
           }, 60)
         }
+        const tt = S.twoTap
+        S.twoTap = null
+        if (tt && e.type === 'pointerup' && performance.now() - tt.t < TWO_FINGER_TAP_MS && Math.hypot(rec.x - rec.sx, rec.y - rec.sy) < TWO_FINGER_TAP_SLOP) {
+          I.zoomAtPoint(tt.x, tt.y, TWO_FINGER_TAP_ZOOM, true, TAP_ZOOM_MS)
+          return
+        }
         if (!wasDrag && e.type === 'pointerup' && e.pointerType !== 'mouse' && !isOnHit(e.target)) {
           const [x, y] = local(e)
           const now = performance.now()
           const lt = S.lastTap
-          if (lt && now - lt.t < DOUBLE_TAP_MS && Math.hypot(x - lt.x, y - lt.y) < 32) {
+          if (lt && now - lt.t < DOUBLE_TAP_MS && Math.hypot(x - lt.x, y - lt.y) < 40) {
             S.lastTap = null
-            I.zoomAtPoint(x, y, 2.2, true)
+            S.following = false
+            I.zoomAtPoint(x, y, DOUBLE_TAP_ZOOM, true, TAP_ZOOM_MS)
           } else {
             S.lastTap = { t: now, x, y }
           }
@@ -540,8 +627,11 @@ export function usePanZoom(options: PanZoomOptions) {
       if (isOnHit(e.target)) return
       const [x, y] = local(e)
       S.following = false
-      I.zoomAtPoint(x, y, 2, true)
+      I.zoomAtPoint(x, y, DOUBLE_TAP_ZOOM, true, TAP_ZOOM_MS)
     }
+
+    // iOS Safari: 지도 위 두 손가락 동작이 페이지 확대(gesture 이벤트)로 새지 않게 막는다 (pointer 이벤트·탭에는 영향 없음)
+    const onGesture = (e: Event) => e.preventDefault()
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
@@ -638,6 +728,8 @@ export function usePanZoom(options: PanZoomOptions) {
     el.addEventListener('dblclick', onDblClick)
     el.addEventListener('wheel', onWheel, { passive: false })
     el.addEventListener('keydown', onKeyDown)
+    el.addEventListener('gesturestart', onGesture)
+    el.addEventListener('gesturechange', onGesture)
     return () => {
       ro.disconnect()
       el.removeEventListener('pointerdown', onPointerDown)
@@ -648,6 +740,8 @@ export function usePanZoom(options: PanZoomOptions) {
       el.removeEventListener('dblclick', onDblClick)
       el.removeEventListener('wheel', onWheel)
       el.removeEventListener('keydown', onKeyDown)
+      el.removeEventListener('gesturestart', onGesture)
+      el.removeEventListener('gesturechange', onGesture)
       api.stop()
       S.sized = false
     }
