@@ -2,6 +2,7 @@
  * features/detail/BuildingDetail.tsx — 건물 상세 (방은 선택하지 않고 건물만 선택된 상태, SPEC §4.4)
  *
  *  건물명 · 영문 · 규모(dims) → 건물 사진(photos["building-<id>"], 없으면 외곽선 모형 플레이스홀더)
+ *  → 건물 소개(facilities.json 의 buildings.<id> — 한 줄 소개 · 설명 · 대표 시설, 비어 있으면 생략)
  *  → 층/시설 수 요약 → 시설 구성(카테고리별 개수) → 층별 안내(층마다 시설 수·대표 시설, 탭하면 그 층 평면도로)
  *
  * 학생 안내 장소(★, content/tour.json)가 있는 건물이면 사진 위에 그 목록을 먼저 보여 준다 (탭하면 안내 코스의 그 지점으로).
@@ -30,6 +31,7 @@ export function BuildingDetail() {
   const closePanel = useAppStore((s) => s.closePanel)
   const startTour = useAppStore((s) => s.startTour)
   const photos = useContent((s) => s.photos)
+  const info = useContent((s) => (buildingId ? s.buildings[buildingId] : undefined))
   const spots = useSpots()
   const building = getBuilding(buildingId)
 
@@ -105,6 +107,26 @@ export function BuildingDetail() {
         )}
 
         <PhotoSlot photos={bPhotos} alt={`${building.name} 사진`} buildingId={building.id} placeholderLabel="건물 사진 준비 중" />
+
+        {info && (info.summary || info.description || info.highlights.length > 0) && (
+          <section className="mt-4" aria-labelledby="bd-about">
+            <Title id="bd-about" en="About" ko="건물 소개" />
+            {info.summary && <p className="text-[1.0625rem] font-medium leading-relaxed text-ink [text-wrap:pretty]">{info.summary}</p>}
+            {info.description && (
+              <p className={`whitespace-pre-line text-[0.9375rem] leading-[1.75] text-ink-soft [text-wrap:pretty] ${info.summary ? 'mt-2' : ''}`}>{info.description}</p>
+            )}
+            {info.highlights.length > 0 && (
+              <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="대표 시설·특징">
+                {info.highlights.map((h) => (
+                  <li key={h} className="chip">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: building.color }} aria-hidden="true" />
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
 
         {/* 요약 지표 */}
         <dl className="mt-4 grid grid-cols-3 divide-x divide-line overflow-hidden rounded-card border border-line bg-surface/60 text-center">

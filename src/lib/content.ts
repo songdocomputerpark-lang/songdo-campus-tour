@@ -1,7 +1,7 @@
 // 런타임 콘텐츠 로더: public/content/{facilities,photos,tour}.json 을 fetch + 캐시.
 // 실패(404·파싱 오류·오프라인)해도 빈 값으로 동작한다 (SPEC §3). 외부 서버 없음 — 같은 출처의 정적 파일만.
 import { create } from 'zustand'
-import type { FacilityMap, PhotoItem, PhotoMap, Tour, TourEvent } from '../data/types'
+import type { BuildingInfoMap, FacilityMap, PhotoItem, PhotoMap, Tour, TourEvent } from '../data/types'
 
 /** public/ 기준 상대경로 → 현재 배포 위치 기준 URL (base './' 이므로 어느 하위 경로에서도 동작) */
 export function assetUrl(path: string): string {
@@ -15,6 +15,8 @@ export type ContentStatus = 'idle' | 'loading' | 'ready'
 export interface ContentState {
   status: ContentStatus
   facilities: FacilityMap
+  /** 건물 소개 (facilities.json 의 buildings) */
+  buildings: BuildingInfoMap
   photos: PhotoMap
   tour: Tour
   load: () => Promise<void>
@@ -38,6 +40,7 @@ let inflight: Promise<void> | null = null
 export const useContent = create<ContentState>((set, get) => ({
   status: 'idle',
   facilities: {},
+  buildings: {},
   photos: {},
   tour: EMPTY_TOUR,
   load: () => {
@@ -46,13 +49,14 @@ export const useContent = create<ContentState>((set, get) => ({
     set({ status: 'loading' })
     inflight = (async () => {
       const [fac, photos, tour] = await Promise.all([
-        getJson<{ facilities?: FacilityMap }>('content/facilities.json'),
+        getJson<{ facilities?: FacilityMap; buildings?: BuildingInfoMap }>('content/facilities.json'),
         getJson<PhotoMap>('content/photos.json'),
         getJson<Partial<Tour>>('content/tour.json'),
       ])
       set({
         status: 'ready',
         facilities: sanitizeFacilities(fac?.facilities),
+        buildings: sanitizeBuildings(fac?.buildings),
         photos: sanitizePhotos(photos),
         tour: sanitizeTour(tour),
       })
@@ -82,6 +86,16 @@ function sanitizeFacilities(raw: FacilityMap | undefined): FacilityMap {
       features: strList(f.features),
       activities: strList(f.activities),
     }
+  }
+  return out
+}
+
+function sanitizeBuildings(raw: BuildingInfoMap | undefined): BuildingInfoMap {
+  const out: BuildingInfoMap = {}
+  if (!raw || typeof raw !== 'object') return out
+  for (const [id, b] of Object.entries(raw)) {
+    if (!b || typeof b !== 'object') continue
+    out[id] = { summary: str(b.summary), description: str(b.description), highlights: strList(b.highlights) }
   }
   return out
 }

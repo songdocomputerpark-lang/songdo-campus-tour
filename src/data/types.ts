@@ -134,6 +134,15 @@ export interface Facility {
 }
 export type FacilityMap = Record<string, Facility>
 
+/** 건물 소개 (facilities.json 의 buildings.<건물ID>) — 건물 안내 패널의 사진 아래에 보인다 */
+export interface BuildingInfo {
+  summary: string
+  description: string
+  /** 대표 시설·특징 짧은 목록 */
+  highlights: string[]
+}
+export type BuildingInfoMap = Record<string, BuildingInfo>
+
 export interface PhotoItem {
   /** public 상대경로: "photos/<id>/<file>" (lib/content.ts 의 assetUrl() 로 해석) */
   src: string
