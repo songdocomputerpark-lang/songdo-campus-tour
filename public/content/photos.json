@@ -62,15 +62,15 @@
     },
     {
       "src": "photos/building-main/08.jpg",
-      "caption": "송도학원 교육의 역사 — 연혁 전시"
+      "caption": "1층 중앙현관 — 송도학원 교육의 역사(연혁) 전시"
     },
     {
       "src": "photos/building-main/09.jpg",
-      "caption": "자랑스러운 송도인 전시"
+      "caption": "1층 중앙현관 — 자랑스러운 송도인 전시"
     },
     {
       "src": "photos/building-main/10.jpg",
-      "caption": "학교법인 송도학원 — 교훈·교시 전시"
+      "caption": "1층 중앙현관 — 학교법인 송도학원 교훈·교시 전시"
     }
   ],
   "building-new": [
@@ -176,7 +176,15 @@
   "main-1f-lobby": [
     {
       "src": "photos/main-1f-lobby/01.jpg",
-      "caption": "본관동 중앙 현관"
+      "caption": "송도학원 교육의 역사 — 연혁 전시"
+    },
+    {
+      "src": "photos/main-1f-lobby/02.jpg",
+      "caption": "자랑스러운 송도인 전시"
+    },
+    {
+      "src": "photos/main-1f-lobby/03.jpg",
+      "caption": "학교법인 송도학원 — 교훈·교시 전시"
     }
   ],
   "main-1f-p1": [
