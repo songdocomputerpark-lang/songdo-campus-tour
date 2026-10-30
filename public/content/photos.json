@@ -11,6 +11,10 @@
     {
       "src": "photos/building-gym/03.jpg",
       "caption": "3층 중강당 — 진로·진학 설명회"
+    },
+    {
+      "src": "photos/building-gym/04.jpg",
+      "caption": "4층 체육관 — 윤영하 소령 추모식"
     }
   ],
   "building-library": [
@@ -34,24 +38,36 @@
     },
     {
       "src": "photos/building-main/02.jpg",
-      "caption": "교시석과 본관동"
+      "caption": "봄 — 소나무 너머 본관동"
     },
     {
       "src": "photos/building-main/03.jpg",
+      "caption": "여름 — 은행나무와 본관동"
+    },
+    {
+      "src": "photos/building-main/04.jpg",
+      "caption": "가을 — 은행나무 단풍길"
+    },
+    {
+      "src": "photos/building-main/05.jpg",
+      "caption": "겨울 — 눈 내리는 교정과 교시석"
+    },
+    {
+      "src": "photos/building-main/06.jpg",
+      "caption": "교시석과 본관동"
+    },
+    {
+      "src": "photos/building-main/07.jpg",
       "caption": "은행나무 길과 본관동"
     }
   ],
   "building-new": [
     {
       "src": "photos/building-new/01.jpg",
-      "caption": "4층 채움 면학실(3학년 자기주도 학습공간)"
-    },
-    {
-      "src": "photos/building-new/02.jpg",
       "caption": "채움 면학실 서가와 개인 학습 부스"
     },
     {
-      "src": "photos/building-new/03.jpg",
+      "src": "photos/building-new/02.jpg",
       "caption": "1층 체력단련실"
     }
   ],
@@ -69,28 +85,10 @@
       "caption": "지능형 과학실(화학실험실)"
     }
   ],
-  "gym-3f-p90": [
-    {
-      "src": "photos/gym-3f-p90/01.jpg",
-      "caption": "중강당 진로·진학 설명회"
-    }
-  ],
   "gym-4f-p91": [
     {
       "src": "photos/gym-4f-p91/01.jpg",
-      "caption": "체육관 학술제 전경"
-    },
-    {
-      "src": "photos/gym-4f-p91/02.jpg",
-      "caption": "학술제가 열린 체육관"
-    },
-    {
-      "src": "photos/gym-4f-p91/03.jpg",
-      "caption": "체육관 졸업식"
-    },
-    {
-      "src": "photos/gym-4f-p91/04.jpg",
-      "caption": "체육관 윤영하 소령 추모식"
+      "caption": "체육관에서 농구하는 학생들"
     }
   ],
   "library-2f-p68": [
@@ -176,18 +174,14 @@
   "new-4f-p42": [
     {
       "src": "photos/new-4f-p42/01.jpg",
-      "caption": "채움 면학실 개인 칸막이 책상"
-    },
-    {
-      "src": "photos/new-4f-p42/02.jpg",
       "caption": "채움 개인 학습 부스"
     },
     {
-      "src": "photos/new-4f-p42/03.jpg",
+      "src": "photos/new-4f-p42/02.jpg",
       "caption": "채움 면학실 서가와 개인 부스"
     },
     {
-      "src": "photos/new-4f-p42/04.jpg",
+      "src": "photos/new-4f-p42/03.jpg",
       "caption": "개인 학습 부스(05~08)"
     }
   ],
