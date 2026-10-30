@@ -59,6 +59,18 @@
     {
       "src": "photos/building-main/07.jpg",
       "caption": "은행나무 길과 본관동"
+    },
+    {
+      "src": "photos/building-main/08.jpg",
+      "caption": "송도학원 교육의 역사 — 연혁 전시"
+    },
+    {
+      "src": "photos/building-main/09.jpg",
+      "caption": "자랑스러운 송도인 전시"
+    },
+    {
+      "src": "photos/building-main/10.jpg",
+      "caption": "학교법인 송도학원 — 교훈·교시 전시"
     }
   ],
   "building-new": [
@@ -83,6 +95,20 @@
     {
       "src": "photos/building-science/03.jpg",
       "caption": "지능형 과학실(화학실험실)"
+    }
+  ],
+  "dining-3f-p115": [
+    {
+      "src": "photos/dining-3f-p115/01.jpg",
+      "caption": "학생식당 전경"
+    },
+    {
+      "src": "photos/dining-3f-p115/02.jpg",
+      "caption": "넓은 창이 있는 학생식당"
+    },
+    {
+      "src": "photos/dining-3f-p115/03.jpg",
+      "caption": "학생식당과 배식 공간"
     }
   ],
   "gym-4f-p91": [
